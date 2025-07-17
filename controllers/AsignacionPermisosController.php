@@ -109,8 +109,8 @@ class AsignacionPermisosController extends ActiveRecord
             $sql_permiso = "SELECT permiso_tipo FROM pmlx_permiso WHERE permiso_id = {$_POST['asignacion_permiso_id']}";
             $permiso_data = self::fetchFirst($sql_permiso);
             
-           // $asignacion = new AsignacionPermisos($_POST);
-        //    $resultado = $asignacion->crear();
+           $asignacion = new AsignacionPermisos($_POST);
+            $resultado = $asignacion->crear();
 
             if($resultado['resultado'] == 1){
                 $usuario_nombre = $usuario_data['usuario_nom1'] . ' ' . $usuario_data['usuario_ape1'];

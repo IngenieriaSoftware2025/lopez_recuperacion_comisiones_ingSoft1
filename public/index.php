@@ -7,6 +7,8 @@ use Controllers\AppController;
 use Controllers\AsignacionPermisosController;
 use Controllers\ComisionController;
 use Controllers\ComisionPersonalController;
+use Controllers\EstadisticasController;
+use Controllers\MapasController;
 use Controllers\PermisosController;
 use Controllers\UsuarioController;
 
@@ -67,6 +69,17 @@ $router->get('/asignacionpermisos/buscarUsuariosAPI', [AsignacionPermisosControl
 $router->get('/asignacionpermisos/buscarAplicacionesAPI', [AsignacionPermisosController::class, 'buscarAplicacionesAPI']);
 $router->get('/asignacionpermisos/buscarPermisosAPI', [AsignacionPermisosController::class, 'buscarPermisosAPI']);
 $router->get('/asignacionpermisos/buscarAdministradoresAPI', [AsignacionPermisosController::class, 'buscarAdministradoresAPI']);
+
+// MAPA
+$router->get('/mapa', [MapasController::class, 'renderizarPagina']);
+
+
+// ESTADÍSTICAS
+$router->get('/estadisticas', [EstadisticasController::class, 'renderizarPagina']);
+$router->get('/estadisticas/buscarComisionesPorComandoAPI', [EstadisticasController::class, 'buscarComisionesPorComandoAPI']);
+$router->get('/estadisticas/buscarComisionesPorUbicacionAPI', [EstadisticasController::class, 'buscarComisionesPorUbicacionAPI']);
+$router->get('/estadisticas/buscarPersonalPorUnidadAPI', [EstadisticasController::class, 'buscarPersonalPorUnidadAPI']);
+$router->get('/estadisticas/buscarComisionesVsPersonalAPI', [EstadisticasController::class, 'buscarComisionesVsPersonalAPI']);
 
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
