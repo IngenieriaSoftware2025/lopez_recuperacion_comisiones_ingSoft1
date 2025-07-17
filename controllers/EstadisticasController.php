@@ -14,76 +14,94 @@ class EstadisticasController extends ActiveRecord
        $router->render('estadisticas/index', []);
    }
 
-   public static function buscarUsuariosPorSituacionAPI(){
+  public static function buscarComisionesPorEstadoAPI(){
        header('Content-Type: application/json');
+       header('Access-Control-Allow-Origin: *');
+       
        try {
            $sql = "SELECT 
-                       CASE 
-                           WHEN usuario_situacion = 1 THEN 'Activos' 
-                           ELSE 'Inactivos' 
-                       END as estado, 
+                       comision_estado as estado, 
                        COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   GROUP BY usuario_situacion 
+                   FROM pmlx_comision 
+                   WHERE comision_situacion = 1
+                   GROUP BY comision_estado 
                    ORDER BY cantidad DESC";
+                   
+           error_log("SQL Comisiones por estado: " . $sql);
            $data = self::fetchArray($sql);
+           error_log("Resultado: " . print_r($data, true));
 
            http_response_code(200);
            echo json_encode([
                'codigo' => 1,
-               'mensaje' => 'Usuarios por situación obtenidos correctamente',
+               'mensaje' => 'Comisiones por estado obtenidas correctamente',
                'data' => $data
            ]);
        } catch (Exception $e) {
-           http_response_code(400);
+           error_log("Error en buscarComisionesPorEstadoAPI: " . $e->getMessage());
+           http_response_code(200);
            echo json_encode([
                'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios por situación',
-               'detalle' => $e->getMessage()
+               'mensaje' => 'Error al obtener comisiones por estado: ' . $e->getMessage(),
+               'data' => []
            ]);
        }
    }
 
-   public static function buscarUsuariosPorAnoRegistroAPI(){
+   public static function buscarPersonalPorRangoAPI(){
        header('Content-Type: application/json');
+       header('Access-Control-Allow-Origin: *');
+       
        try {
            $sql = "SELECT 
-                       YEAR(usuario_fecha_creacion) as año_registro, 
+                       personal_rango as rango, 
                        COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   WHERE usuario_situacion = 1 
-                       AND usuario_fecha_creacion IS NOT NULL
-                   GROUP BY YEAR(usuario_fecha_creacion) 
-                   ORDER BY año_registro DESC";
+                   FROM pmlx_personal_comisiones 
+                   WHERE personal_situacion = 1
+                   GROUP BY personal_rango 
+                   ORDER BY cantidad DESC";
+                   
+           error_log("SQL Personal por rango: " . $sql);
            $data = self::fetchArray($sql);
+           error_log("Resultado: " . print_r($data, true));
 
            http_response_code(200);
            echo json_encode([
                'codigo' => 1,
-               'mensaje' => 'Usuarios por año de registro obtenidos correctamente',
+               'mensaje' => 'Personal por rango obtenido correctamente',
                'data' => $data
            ]);
        } catch (Exception $e) {
-           http_response_code(400);
+           error_log("Error en buscarPersonalPorRangoAPI: " . $e->getMessage());
+           http_response_code(200);
            echo json_encode([
                'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios por año de registro',
-               'detalle' => $e->getMessage()
+               'mensaje' => 'Error al obtener personal por rango: ' . $e->getMessage(),
+               'data' => []
            ]);
        }
    }
+
+   // MÉTODOS ADICIONALES SIMPLIFICADOS
 
    public static function buscarUsuariosPorDominioCorreoAPI(){
        header('Content-Type: application/json');
+       header('Access-Control-Allow-Origin: *');
+       
        try {
-           $sql = "SELECT FIRST 10
-                       SUBSTRING(usuario_correo FROM POSITION('@' IN usuario_correo) + 1) as dominio_correo, 
+           // Versión simplificada sin funciones complejas de string
+           $sql = "SELECT 
+                       usuario_correo as dominio_correo, 
                        COUNT(*) as cantidad 
                    FROM pmlx_usuario 
                    WHERE usuario_situacion = 1 
-                   GROUP BY SUBSTRING(usuario_correo FROM POSITION('@' IN usuario_correo) + 1)
+                       AND usuario_correo IS NOT NULL
+                   GROUP BY usuario_correo
                    ORDER BY cantidad DESC";
+                   
+           error_log("SQL Usuarios por dominio: " . $sql);
            $data = self::fetchArray($sql);
+           error_log("Resultado: " . print_r($data, true));
 
            http_response_code(200);
            echo json_encode([
@@ -92,113 +110,34 @@ class EstadisticasController extends ActiveRecord
                'data' => $data
            ]);
        } catch (Exception $e) {
-           http_response_code(400);
+           error_log("Error en buscarUsuariosPorDominioCorreoAPI: " . $e->getMessage());
+           http_response_code(200);
            echo json_encode([
                'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios por dominio de correo',
-               'detalle' => $e->getMessage()
+               'mensaje' => 'Error al obtener usuarios por dominio de correo: ' . $e->getMessage(),
+               'data' => []
            ]);
        }
    }
 
-   public static function buscarUsuariosPorMesAPI(){
+     public static function buscarUsuariosPorInicialNombreAPI(){
        header('Content-Type: application/json');
+       header('Access-Control-Allow-Origin: *');
+       
        try {
+           // Versión simplificada
            $sql = "SELECT 
-                       CASE MONTH(usuario_fecha_creacion)
-                           WHEN 1 THEN 'Enero'
-                           WHEN 2 THEN 'Febrero'
-                           WHEN 3 THEN 'Marzo'
-                           WHEN 4 THEN 'Abril'
-                           WHEN 5 THEN 'Mayo'
-                           WHEN 6 THEN 'Junio'
-                           WHEN 7 THEN 'Julio'
-                           WHEN 8 THEN 'Agosto'
-                           WHEN 9 THEN 'Septiembre'
-                           WHEN 10 THEN 'Octubre'
-                           WHEN 11 THEN 'Noviembre'
-                           WHEN 12 THEN 'Diciembre'
-                       END as mes, 
+                       usuario_nom1 as inicial_nombre, 
                        COUNT(*) as cantidad 
                    FROM pmlx_usuario 
                    WHERE usuario_situacion = 1 
-                       AND usuario_fecha_creacion IS NOT NULL
-                       AND YEAR(usuario_fecha_creacion) = YEAR(CURRENT)
-                   GROUP BY MONTH(usuario_fecha_creacion) 
-                   ORDER BY MONTH(usuario_fecha_creacion)";
-           $data = self::fetchArray($sql);
-
-           http_response_code(200);
-           echo json_encode([
-               'codigo' => 1,
-               'mensaje' => 'Usuarios por mes del año actual obtenidos correctamente',
-               'data' => $data
-           ]);
-       } catch (Exception $e) {
-           http_response_code(400);
-           echo json_encode([
-               'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios por mes',
-               'detalle' => $e->getMessage()
-           ]);
-       }
-   }
-
-   public static function buscarResumenGeneralAPI(){
-       header('Content-Type: application/json');
-       try {
-           $sql = "SELECT 
-                       'Total Usuarios' as categoria, 
-                       COUNT(*) as cantidad 
-                   FROM pmlx_usuario
-                   UNION ALL
-                   SELECT 
-                       'Usuarios Activos' as categoria, 
-                       COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   WHERE usuario_situacion = 1
-                   UNION ALL
-                   SELECT 
-                       'Usuarios con Foto' as categoria, 
-                       COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   WHERE usuario_fotografia IS NOT NULL 
-                       AND usuario_fotografia != ''
-                   UNION ALL
-                   SELECT 
-                       'Registros Hoy' as categoria, 
-                       COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   WHERE DATE(usuario_fecha_creacion) = TODAY";
-           $data = self::fetchArray($sql);
-
-           http_response_code(200);
-           echo json_encode([
-               'codigo' => 1,
-               'mensaje' => 'Resumen general obtenido correctamente',
-               'data' => $data
-           ]);
-       } catch (Exception $e) {
-           http_response_code(400);
-           echo json_encode([
-               'codigo' => 0,
-               'mensaje' => 'Error al obtener el resumen general',
-               'detalle' => $e->getMessage()
-           ]);
-       }
-   }
-
-   public static function buscarUsuariosPorInicialNombreAPI(){
-       header('Content-Type: application/json');
-       try {
-           $sql = "SELECT FIRST 10
-                       UPPER(LEFT(usuario_nom1, 1)) as inicial_nombre, 
-                       COUNT(*) as cantidad 
-                   FROM pmlx_usuario 
-                   WHERE usuario_situacion = 1 
-                   GROUP BY UPPER(LEFT(usuario_nom1, 1))
+                       AND usuario_nom1 IS NOT NULL
+                   GROUP BY usuario_nom1
                    ORDER BY cantidad DESC";
+                   
+           error_log("SQL Usuarios por inicial: " . $sql);
            $data = self::fetchArray($sql);
+           error_log("Resultado: " . print_r($data, true));
 
            http_response_code(200);
            echo json_encode([
@@ -207,27 +146,33 @@ class EstadisticasController extends ActiveRecord
                'data' => $data
            ]);
        } catch (Exception $e) {
-           http_response_code(400);
+           error_log("Error en buscarUsuariosPorInicialNombreAPI: " . $e->getMessage());
+           http_response_code(200);
            echo json_encode([
                'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios por inicial del nombre',
-               'detalle' => $e->getMessage()
+               'mensaje' => 'Error al obtener usuarios por inicial del nombre: ' . $e->getMessage(),
+               'data' => []
            ]);
        }
    }
 
    public static function buscarUsuariosUltimos30DiasAPI(){
        header('Content-Type: application/json');
+       header('Access-Control-Allow-Origin: *');
+       
        try {
            $sql = "SELECT 
-                       DATE(usuario_fecha_creacion) as fecha_registro, 
+                       usuario_fecha_creacion as fecha_registro, 
                        COUNT(*) as cantidad 
                    FROM pmlx_usuario 
                    WHERE usuario_situacion = 1 
-                       AND usuario_fecha_creacion >= CURRENT - INTERVAL 30 DAY
-                   GROUP BY DATE(usuario_fecha_creacion) 
+                       AND usuario_fecha_creacion >= (TODAY - 30)
+                   GROUP BY usuario_fecha_creacion 
                    ORDER BY fecha_registro DESC";
+                   
+           error_log("SQL Usuarios últimos 30 días: " . $sql);
            $data = self::fetchArray($sql);
+           error_log("Resultado: " . print_r($data, true));
 
            http_response_code(200);
            echo json_encode([
@@ -236,11 +181,12 @@ class EstadisticasController extends ActiveRecord
                'data' => $data
            ]);
        } catch (Exception $e) {
-           http_response_code(400);
+           error_log("Error en buscarUsuariosUltimos30DiasAPI: " . $e->getMessage());
+           http_response_code(200);
            echo json_encode([
                'codigo' => 0,
-               'mensaje' => 'Error al obtener usuarios de los últimos 30 días',
-               'detalle' => $e->getMessage()
+               'mensaje' => 'Error al obtener usuarios de los últimos 30 días: ' . $e->getMessage(),
+               'data' => []
            ]);
        }
    }

@@ -75,12 +75,15 @@ $router->get('/mapa', [MapasController::class, 'renderizarPagina']);
 
 
 // ESTADÍSTICAS
+// En tu archivo de rutas
 $router->get('/estadisticas', [EstadisticasController::class, 'renderizarPagina']);
-$router->get('/estadisticas/buscarComisionesPorComandoAPI', [EstadisticasController::class, 'buscarComisionesPorComandoAPI']);
-$router->get('/estadisticas/buscarComisionesPorUbicacionAPI', [EstadisticasController::class, 'buscarComisionesPorUbicacionAPI']);
-$router->get('/estadisticas/buscarPersonalPorUnidadAPI', [EstadisticasController::class, 'buscarPersonalPorUnidadAPI']);
-$router->get('/estadisticas/buscarComisionesVsPersonalAPI', [EstadisticasController::class, 'buscarComisionesVsPersonalAPI']);
-
+$router->get('/estadisticas/testAPI', [EstadisticasController::class, 'testAPI']);
+$router->get('/estadisticas/buscarUsuariosUltimos30DiasAPI', [EstadisticasController::class, 'buscarUsuariosUltimos30DiasAPI']);
+$router->get('/estadisticas/buscarUsuariosPorNombreAPI', [EstadisticasController::class, 'buscarUsuariosPorNombreAPI']);
+$router->get('/estadisticas/buscarPersonalPorRangoAPI', [EstadisticasController::class, 'buscarPersonalPorRangoAPI']);
+$router->get('/estadisticas/buscarUsuariosPorCorreoAPI', [EstadisticasController::class, 'buscarUsuariosPorCorreoAPI']);
+$router->get('/estadisticas/buscarComisionesPorEstadoAPI', [EstadisticasController::class, 'buscarComisionesPorEstadoAPI']);
+$router->get('/estadisticas/buscarResumenGeneralAPI', [EstadisticasController::class, 'buscarResumenGeneralAPI']);
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();

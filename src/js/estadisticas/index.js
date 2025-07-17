@@ -1,275 +1,300 @@
 import Chart from 'chart.js/auto';
 
 document.addEventListener('DOMContentLoaded', function() {
-    const grafico1Element = document.getElementById("grafico1");
-    const grafico2Element = document.getElementById("grafico2");
-    const grafico3Element = document.getElementById("grafico3");
-    const grafico4Element = document.getElementById("grafico4");
+    // Verificar elementos canvas
+    const grafico1 = document.getElementById("grafico1");
+    const grafico2 = document.getElementById("grafico2");
+    const grafico3 = document.getElementById("grafico3");
+    const grafico4 = document.getElementById("grafico4");
+    const grafico5 = document.getElementById("grafico5");
     
-    if (!grafico1Element || !grafico2Element || !grafico3Element || !grafico4Element) {
-        console.error("No se encontraron todos los elementos de gráficos");
+    if (!grafico1 || !grafico2 || !grafico3 || !grafico4 || !grafico5) {
+        console.error("No se encontraron todos los elementos canvas");
         return;
     }
 
-    const grafico1 = grafico1Element.getContext("2d");
-    const grafico2 = grafico2Element.getContext("2d");
-    const grafico3 = grafico3Element.getContext("2d");
-    const grafico4 = grafico4Element.getContext("2d");
+    // Configuraciones básicas
+    const configPie = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 15 } }
+        }
+    };
 
-    // Gráfico 1: Usuarios por Situación (Pie)
-    window.graficaUsuariosPorSituacion = new Chart(grafico1, {
-        type: 'pie',
+    const configBar = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+    };
+
+    // Crear gráficas
+    window.chart1 = new Chart(grafico1.getContext("2d"), {
+        type: 'line',
         data: { labels: [], datasets: [] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...configBar,
             plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Usuarios por Situación',
-                    font: { size: 16, weight: 'bold' }
-                },
-                legend: { 
-                    position: 'bottom',
-                    labels: { padding: 20, font: { size: 12 } }
-                }
+                title: { display: true, text: 'Usuarios Últimos 30 Días' }
             }
         }
     });
 
-    // Gráfico 2: Usuarios por Año de Registro (Bar)
-    window.graficaUsuariosPorAno = new Chart(grafico2, {
+    window.chart2 = new Chart(grafico2.getContext("2d"), {
         type: 'bar',
         data: { labels: [], datasets: [] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...configBar,
             plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Usuarios por Año de Registro',
-                    font: { size: 16, weight: 'bold' }
-                },
-                legend: { display: false }
-            },
-            scales: { 
-                y: { 
-                    beginAtZero: true,
-                    title: { display: true, text: 'Cantidad de Usuarios' }
-                },
-                x: {
-                    title: { display: true, text: 'Año' }
-                }
+                title: { display: true, text: 'Usuarios por Nombre' }
             }
         }
     });
 
-    // Gráfico 3: Usuarios por Dominio de Correo (Doughnut)
-    window.graficaUsuariosPorDominio = new Chart(grafico3, {
+    window.chart3 = new Chart(grafico3.getContext("2d"), {
         type: 'doughnut',
         data: { labels: [], datasets: [] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...configPie,
             plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Usuarios por Dominio de Correo',
-                    font: { size: 16, weight: 'bold' }
-                },
-                legend: { 
-                    position: 'bottom',
-                    labels: { padding: 15, font: { size: 11 } }
-                }
+                title: { display: true, text: 'Personal por Rango' }
             }
         }
     });
 
-    // Gráfico 4: Resumen General (Bar Horizontal)
-    window.graficaResumenGeneral = new Chart(grafico4, {
+    window.chart4 = new Chart(grafico4.getContext("2d"), {
+        type: 'pie',
+        data: { labels: [], datasets: [] },
+        options: {
+            ...configPie,
+            plugins: {
+                title: { display: true, text: 'Usuarios por Correo' }
+            }
+        }
+    });
+
+    window.chart5 = new Chart(grafico5.getContext("2d"), {
         type: 'bar',
         data: { labels: [], datasets: [] },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...configBar,
             indexAxis: 'y',
             plugins: {
-                title: { 
-                    display: true, 
-                    text: 'Resumen General del Sistema',
-                    font: { size: 16, weight: 'bold' }
-                },
-                legend: { display: false }
-            },
-            scales: { 
-                x: { 
-                    beginAtZero: true,
-                    title: { display: true, text: 'Cantidad' }
-                }
+                title: { display: true, text: 'Comisiones por Estado' }
             }
         }
     });
 
-    // Función para obtener colores aleatorios
-    const obtenerColores = (cantidad) => {
-        const colores = [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
-            '#4BC0C0', '#FF6384', '#36A2EB', '#FFCE56'
-        ];
-        return colores.slice(0, cantidad);
+    // Colores
+    const colores = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+        '#9966FF', '#FF9F40', '#FF6B6B', '#4ECDC4',
+        '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
+    ];
+
+    // Función para manejar respuestas
+    const manejarRespuesta = async (respuesta) => {
+        const texto = await respuesta.text();
+        console.log('Respuesta del servidor:', texto.substring(0, 200));
+        
+        if (texto.includes('<!DOCTYPE') || texto.includes('<html>')) {
+            throw new Error('El servidor devolvió HTML en lugar de JSON');
+        }
+        
+        return JSON.parse(texto);
     };
 
-    // Función 1: Buscar Usuarios por Situación
-    const BuscarUsuariosPorSituacion = async () => {
-        const url = '/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorSituacionAPI';
-        const config = { method: 'GET' };
-
+    // 1. Usuarios últimos 30 días
+    const BuscarUsuarios30Dias = async () => {
         try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosUltimos30DiasAPI');
+            const datos = await manejarRespuesta(respuesta);
             
-            if (codigo == 1 && data && data.length > 0) {
-                const etiquetas = data.map(d => d.estado);
-                const cantidades = data.map(d => parseInt(d.cantidad));
-                
-                window.graficaUsuariosPorSituacion.data.labels = etiquetas;
-                window.graficaUsuariosPorSituacion.data.datasets = [{
-                    label: 'Cantidad de Usuarios',
-                    data: cantidades,
-                    backgroundColor: ['#28a745', '#dc3545'],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }];
-                window.graficaUsuariosPorSituacion.update();
-            }
-        } catch (error) {
-            console.error('Error en usuarios por situación:', error);
-        }
-    }
-
-    // Función 2: Buscar Usuarios por Año de Registro
-    const BuscarUsuariosPorAno = async () => {
-        const url = '/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorAnoRegistroAPI';
-        const config = { method: 'GET' };
-
-        try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
+            console.log('Usuarios 30 días:', datos);
             
-            if (codigo == 1 && data && data.length > 0) {
-                const etiquetas = data.map(d => d.año_registro);
-                const cantidades = data.map(d => parseInt(d.cantidad));
+            if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
+                const etiquetas = datos.data.map(d => d.fecha_registro);
+                const cantidades = datos.data.map(d => parseInt(d.cantidad));
                 
-                window.graficaUsuariosPorAno.data.labels = etiquetas;
-                window.graficaUsuariosPorAno.data.datasets = [{
+                window.chart1.data.labels = etiquetas;
+                window.chart1.data.datasets = [{
                     label: 'Usuarios Registrados',
                     data: cantidades,
-                    backgroundColor: '#36A2EB',
-                    borderColor: '#1E88E5',
-                    borderWidth: 1
+                    borderColor: '#36A2EB',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.1
                 }];
-                window.graficaUsuariosPorAno.update();
+                window.chart1.update();
             }
         } catch (error) {
-            console.error('Error en usuarios por año:', error);
+            console.error('Error en usuarios 30 días:', error);
         }
-    }
+    };
 
-    // Función 3: Buscar Usuarios por Dominio de Correo
-    const BuscarUsuariosPorDominio = async () => {
-        const url = '/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorDominioCorreoAPI';
-        const config = { method: 'GET' };
-
+    // 2. Usuarios por nombre
+    const BuscarUsuariosPorNombre = async () => {
         try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorNombreAPI');
+            const datos = await manejarRespuesta(respuesta);
             
-            if (codigo == 1 && data && data.length > 0) {
-                const etiquetas = data.map(d => d.dominio_correo);
-                const cantidades = data.map(d => parseInt(d.cantidad));
-                const colores = obtenerColores(etiquetas.length);
+            console.log('Usuarios por nombre:', datos);
+            
+            if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
+                const etiquetas = datos.data.slice(0, 10).map(d => d.inicial_nombre);
+                const cantidades = datos.data.slice(0, 10).map(d => parseInt(d.cantidad));
                 
-                window.graficaUsuariosPorDominio.data.labels = etiquetas;
-                window.graficaUsuariosPorDominio.data.datasets = [{
-                    label: 'Usuarios por Dominio',
+                window.chart2.data.labels = etiquetas;
+                window.chart2.data.datasets = [{
+                    label: 'Cantidad',
                     data: cantidades,
-                    backgroundColor: colores,
+                    backgroundColor: '#4BC0C0',
+                    borderColor: '#2E8B8B',
+                    borderWidth: 1
+                }];
+                window.chart2.update();
+            }
+        } catch (error) {
+            console.error('Error en usuarios por nombre:', error);
+        }
+    };
+
+    // 3. Personal por rango
+    const BuscarPersonalPorRango = async () => {
+        try {
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarPersonalPorRangoAPI');
+            const datos = await manejarRespuesta(respuesta);
+            
+            console.log('Personal por rango:', datos);
+            
+            if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
+                const etiquetas = datos.data.map(d => d.rango);
+                const cantidades = datos.data.map(d => parseInt(d.cantidad));
+                const coloresGrafica = colores.slice(0, etiquetas.length);
+                
+                window.chart3.data.labels = etiquetas;
+                window.chart3.data.datasets = [{
+                    data: cantidades,
+                    backgroundColor: coloresGrafica,
                     borderWidth: 2,
                     borderColor: '#fff'
                 }];
-                window.graficaUsuariosPorDominio.update();
+                window.chart3.update();
             }
         } catch (error) {
-            console.error('Error en usuarios por dominio:', error);
+            console.error('Error en personal por rango:', error);
         }
-    }
+    };
 
-    // Función 4: Buscar Resumen General
-    const BuscarResumenGeneral = async () => {
-        const url = '/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarResumenGeneralAPI';
-        const config = { method: 'GET' };
-
+    // 4. Usuarios por correo
+    const BuscarUsuariosPorCorreo = async () => {
         try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorCorreoAPI');
+            const datos = await manejarRespuesta(respuesta);
             
-            if (codigo == 1 && data && data.length > 0) {
-                const etiquetas = data.map(d => d.categoria);
-                const cantidades = data.map(d => parseInt(d.cantidad));
+            console.log('Usuarios por correo:', datos);
+            
+            if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
+                const etiquetas = datos.data.slice(0, 8).map(d => d.dominio_correo);
+                const cantidades = datos.data.slice(0, 8).map(d => parseInt(d.cantidad));
+                const coloresGrafica = colores.slice(0, etiquetas.length);
                 
-                window.graficaResumenGeneral.data.labels = etiquetas;
-                window.graficaResumenGeneral.data.datasets = [{
-                    label: 'Cantidad',
+                window.chart4.data.labels = etiquetas;
+                window.chart4.data.datasets = [{
                     data: cantidades,
-                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#17a2b8'],
-                    borderColor: ['#0056b3', '#1e7e34', '#e0a800', '#117a8b'],
+                    backgroundColor: coloresGrafica,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }];
+                window.chart4.update();
+            }
+        } catch (error) {
+            console.error('Error en usuarios por correo:', error);
+        }
+    };
+
+    // 5. Comisiones por estado
+    const BuscarComisionesPorEstado = async () => {
+        try {
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarComisionesPorEstadoAPI');
+            const datos = await manejarRespuesta(respuesta);
+            
+            console.log('Comisiones por estado:', datos);
+            
+            if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
+                const etiquetas = datos.data.map(d => d.estado);
+                const cantidades = datos.data.map(d => parseInt(d.cantidad));
+                
+                window.chart5.data.labels = etiquetas;
+                window.chart5.data.datasets = [{
+                    label: 'Comisiones',
+                    data: cantidades,
+                    backgroundColor: '#FF6384',
+                    borderColor: '#FF1744',
                     borderWidth: 1
                 }];
-                window.graficaResumenGeneral.update();
+                window.chart5.update();
+            }
+        } catch (error) {
+            console.error('Error en comisiones por estado:', error);
+        }
+    };
+
+    // Buscar resumen general
+    const BuscarResumenGeneral = async () => {
+        try {
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarResumenGeneralAPI');
+            const datos = await manejarRespuesta(respuesta);
+            
+            console.log('Resumen general:', datos);
+            
+            if (datos.codigo == 1 && datos.data) {
+                const data = datos.data;
+                document.getElementById('totalUsuarios').textContent = data.total_usuarios || 0;
+                document.getElementById('totalComisiones').textContent = data.total_comisiones || 0;
+                document.getElementById('totalPersonal').textContent = data.total_personal || 0;
+                document.getElementById('totalAplicaciones').textContent = data.total_aplicaciones || 0;
+                document.getElementById('totalPermisos').textContent = data.total_permisos || 0;
+                document.getElementById('totalAsignaciones').textContent = data.total_asignaciones_permisos || 0;
             }
         } catch (error) {
             console.error('Error en resumen general:', error);
         }
-    }
+    };
 
-    // Función adicional: Usuarios por Mes (se puede usar en lugar de una de las anteriores)
-    const BuscarUsuariosPorMes = async () => {
-        const url = '/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorMesAPI';
-        const config = { method: 'GET' };
-
+    // Función de prueba
+    const TestAPI = async () => {
         try {
-            const respuesta = await fetch(url, config);
-            const datos = await respuesta.json();
-            const { codigo, mensaje, data } = datos;
-            
-            if (codigo == 1 && data && data.length > 0) {
-                const etiquetas = data.map(d => d.mes);
-                const cantidades = data.map(d => parseInt(d.cantidad));
-                
-                // Aquí podrías actualizar uno de los gráficos con estos datos
-                console.log('Usuarios por mes:', data);
-            }
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/testAPI');
+            const datos = await manejarRespuesta(respuesta);
+            console.log('Test API:', datos);
         } catch (error) {
-            console.error('Error en usuarios por mes:', error);
+            console.error('Error en test API:', error);
         }
+    };
+
+    // Actualizar todas las gráficas
+    const actualizarTodas = () => {
+        console.log('Actualizando todas las estadísticas...');
+        TestAPI(); // Primero probar la API
+        BuscarUsuarios30Dias();
+        BuscarUsuariosPorNombre();
+        BuscarPersonalPorRango();
+        BuscarUsuariosPorCorreo();
+        BuscarComisionesPorEstado();
+        BuscarResumenGeneral();
+    };
+
+    // Ejecutar al cargar
+    console.log('Iniciando estadísticas...');
+    actualizarTodas();
+
+    // Botón actualizar
+    const btnActualizar = document.getElementById('btnActualizarEstadisticas');
+    if (btnActualizar) {
+        btnActualizar.addEventListener('click', actualizarTodas);
     }
 
-    // Ejecutar todas las funciones al cargar la página
-    BuscarUsuariosPorSituacion();
-    BuscarUsuariosPorAno();
-    BuscarUsuariosPorDominio();
-    BuscarResumenGeneral();
-
-    // Actualizar gráficos cada 30 segundos
-    setInterval(() => {
-        BuscarUsuariosPorSituacion();
-        BuscarUsuariosPorAno();
-        BuscarUsuariosPorDominio();
-        BuscarResumenGeneral();
-    }, 30000);
+    // Auto-actualizar cada 5 minutos
+    setInterval(actualizarTodas, 300000);
 });
