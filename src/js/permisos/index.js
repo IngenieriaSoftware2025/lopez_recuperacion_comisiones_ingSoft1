@@ -4,90 +4,76 @@ import { validarFormulario } from '../funciones';
 import DataTable from "datatables.net-bs5";
 import { lenguaje } from "../lenguaje";
 
-const formComisionPersonal = document.getElementById('formComisionPersonal');
+const formPermiso = document.getElementById('formPermiso');
 const BtnGuardar = document.getElementById('BtnGuardar');
 const BtnModificar = document.getElementById('BtnModificar');
 const BtnLimpiar = document.getElementById('BtnLimpiar');
-const BtnBuscarPersonal = document.getElementById('BtnBuscarPersonal');
-const InputPersonalTel = document.getElementById('personal_tel');
-const InputPersonalDpi = document.getElementById('personal_dpi');
+const BtnBuscarPermisos = document.getElementById('BtnBuscarPermisos');
+const SelectAplicacion = document.getElementById('app_id');
 const seccionTabla = document.getElementById('seccionTabla');
 
-// const validarPermisoAccion = async (modulo, accion) => {
-//     try {
-//         const response = await fetch(`/lopez_recuperacion_comisiones_ingSoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
-//         const data = await response.json();
-//         if (!data.permitido) {
-//             Swal.fire({
-//                 position: "center",
-//                 icon: "warning",
-//                 title: "Sin permisos",
-//                 text: `No tienes permisos para ${accion} personal`,
-//                 showConfirmButton: true,
-//             });
-//             return false;
-//         }
-//         return true;
-//     } catch (error) {
-//         console.log(error);
-//         return false;
-//     }
-// }
-
-const ValidarTelefono = () => {
-    const CantidadDigitos = InputPersonalTel.value;
-
-    if (CantidadDigitos.length < 1) {
-        InputPersonalTel.classList.remove('is-valid', 'is-invalid');
-    } else {
-        if (CantidadDigitos.length != 8) {
+const validarPermisoAccion = async (modulo, accion) => {
+    try {
+        const response = await fetch(`/lopez_recuperacion_comisiones_ingSoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
+        const data = await response.json();
+        if (!data.permitido) {
             Swal.fire({
                 position: "center",
-                icon: "error",
-                title: "Revise el numero de telefono",
-                text: "La cantidad de digitos debe ser exactamente 8 digitos",
+                icon: "warning",
+                title: "Sin permisos",
+                text: `No tienes permisos para ${accion} permisos`,
                 showConfirmButton: true,
             });
-
-            InputPersonalTel.classList.remove('is-valid');
-            InputPersonalTel.classList.add('is-invalid');
-        } else {
-            InputPersonalTel.classList.remove('is-invalid');
-            InputPersonalTel.classList.add('is-valid');
+            return false;
         }
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
     }
 }
 
-const ValidarDpi = () => {
-    const dpi = InputPersonalDpi.value.trim();
+const cargarAplicaciones = async () => {
+    const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/buscarAplicacionesAPI`;
+    const config = {
+        method: 'GET'
+    }
 
-    if (dpi.length < 1) {
-        InputPersonalDpi.classList.remove('is-valid', 'is-invalid');
-    } else {
-        if (dpi.length < 13) {
-            Swal.fire({
+    try {
+        const respuesta = await fetch(url, config);
+        const datos = await respuesta.json();
+        const { codigo, mensaje, data } = datos;
+
+        if (codigo == 1) {
+            SelectAplicacion.innerHTML = '<option value="">Seleccione una aplicación</option>';
+            
+            data.forEach(app => {
+                const option = document.createElement('option');
+                option.value = app.app_id;
+                option.textContent = app.app_nombre_corto;
+                SelectAplicacion.appendChild(option);
+            });
+        } else {
+            await Swal.fire({
                 position: "center",
-                icon: "error",
-                title: "DPI INVALIDO",
-                text: "El DPI debe tener al menos 13 caracteres",
+                icon: "info",
+                title: "Error",
+                text: mensaje,
                 showConfirmButton: true,
             });
-
-            InputPersonalDpi.classList.remove('is-valid');
-            InputPersonalDpi.classList.add('is-invalid');
-        } else {
-            InputPersonalDpi.classList.remove('is-invalid');
-            InputPersonalDpi.classList.add('is-valid');
         }
+
+    } catch (error) {
+        console.log(error);
     }
 }
 
-const guardarPersonal = async e => {
+const guardarPermiso = async e => {
     e.preventDefault();
-    if (!await validarPermisoAccion('COMISIONPERSONAL', 'crear')) return;
+    if (!await validarPermisoAccion('PERMISOS', 'crear')) return;
     BtnGuardar.disabled = true;
 
-    if (!validarFormulario(formComisionPersonal, ['personal_id', 'personal_situacion'])) {
+    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -99,8 +85,8 @@ const guardarPersonal = async e => {
         return;
     }
 
-    const body = new FormData(formComisionPersonal);
-    const url = "/lopez_recuperacion_comisiones_ingSoft1/comisionpersonal/guardarAPI";
+    const body = new FormData(formPermiso);
+    const url = "/lopez_recuperacion_comisiones_ingSoft1/permisos/guardarAPI";
     const config = {
         method: 'POST',
         body
@@ -122,7 +108,7 @@ const guardarPersonal = async e => {
             });
 
             limpiarTodo();
-            BuscarPersonal();
+            BuscarPermisos();
         } else {
             await Swal.fire({
                 position: "center",
@@ -139,8 +125,10 @@ const guardarPersonal = async e => {
     BtnGuardar.disabled = false;
 }
 
-const BuscarPersonal = async () => {
-    const url = `/lopez_recuperacion_comisiones_ingSoft1/comisionpersonal/buscarAPI`;
+const BuscarPermisos = async () => {
+    if (!await validarPermisoAccion('PERMISOS', 'buscar')) return;
+    
+    const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/buscarAPI`;
     const config = {
         method: 'GET'
     }
@@ -151,7 +139,7 @@ const BuscarPersonal = async () => {
         const { codigo, mensaje, data } = datos;
 
         if (codigo == 1) {
-            console.log('Personal encontrado:', data);
+            console.log('Permisos encontrados:', data);
 
             if (datatable) {
                 datatable.clear().draw();
@@ -175,13 +163,13 @@ const BuscarPersonal = async () => {
 const MostrarTabla = () => {
     if (seccionTabla.style.display === 'none') {
         seccionTabla.style.display = 'block';
-        BuscarPersonal();
+        BuscarPermisos();
     } else {
         seccionTabla.style.display = 'none';
     }
 }
 
-const datatable = new DataTable('#TableComisionPersonal', {
+const datatable = new DataTable('#TablePermisos', {
     dom: `
         <"row mt-3 justify-content-between" 
             <"col" l> 
@@ -199,84 +187,47 @@ const datatable = new DataTable('#TableComisionPersonal', {
     columns: [
         {
             title: 'No.',
-            data: 'personal_id',
-            width: '5%',
+            data: 'permiso_id',
+            width: '8%',
             render: (data, type, row, meta) => meta.row + 1
         },
         { 
-            title: 'Primer Nombre', 
-            data: 'personal_nom1',
-            width: '10%'
+            title: 'Aplicación', 
+            data: 'app_nombre_corto',
+            width: '20%'
         },
         { 
-            title: 'Segundo Nombre', 
-            data: 'personal_nom2',
-            width: '10%'
-        },
-        { 
-            title: 'Primer Apellido', 
-            data: 'personal_ape1',
-            width: '10%'
-        },
-        { 
-            title: 'Segundo Apellido', 
-            data: 'personal_ape2',
-            width: '10%'
-        },
-        { 
-            title: 'DPI', 
-            data: 'personal_dpi',
-            width: '10%'
-        },
-        { 
-            title: 'Teléfono', 
-            data: 'personal_tel',
-            width: '8%'
-        },
-        { 
-            title: 'Correo', 
-            data: 'personal_correo',
-            width: '12%'
-        },
-        {
-            title: 'Rango',
-            data: 'personal_rango',
-            width: '8%',
+            title: 'Tipo de Permiso', 
+            data: 'permiso_tipo',
+            width: '20%',
             render: (data, type, row) => {
-                let badgeClass = 'bg-secondary';
-                switch(data) {
-                    case 'OFICIAL':
-                        badgeClass = 'bg-danger';
-                        break;
-                    case 'ESPECIALISTA':
-                        badgeClass = 'bg-warning';
-                        break;
-                    case 'TROPA':
-                        badgeClass = 'bg-success';
-                        break;
-                    case 'PLANILLERO':
-                        badgeClass = 'bg-info';
-                        break;
-                }
-                return `<span class="badge ${badgeClass}">${data}</span>`;
+                const colores = {
+                    'LECTURA': 'success',
+                    'ESCRITURA': 'primary', 
+                    'MODIFICACION': 'warning',
+                    'ELIMINACION': 'danger',
+                    'REPORTE': 'info'
+                };
+                const color = colores[data] || 'secondary';
+                return `<span class="badge bg-${color}">${data}</span>`;
             }
         },
-        {
-            title: 'Unidad',
-            data: 'personal_unidad',
-            width: '12%'
+        { 
+            title: 'Descripción', 
+            data: 'permiso_desc',
+            width: '30%'
         },
         {
             title: 'Situación',
-            data: 'personal_situacion',
-            width: '7%',
+            data: 'permiso_situacion',
+            width: '12%',
             render: (data, type, row) => {
                 return data == 1 ? "ACTIVO" : "INACTIVO";
             }
         },
         {
             title: 'Acciones',
-            data: 'personal_id',
+            data: 'permiso_id',
             width: '10%',
             searchable: false,
             orderable: false,
@@ -285,16 +236,9 @@ const datatable = new DataTable('#TableComisionPersonal', {
                  <div class='d-flex justify-content-center'>
                      <button class='btn btn-warning modificar mx-1' 
                          data-id="${data}" 
-                         data-nom1="${row.personal_nom1 || ''}"  
-                         data-nom2="${row.personal_nom2 || ''}"  
-                         data-ape1="${row.personal_ape1 || ''}"  
-                         data-ape2="${row.personal_ape2 || ''}"  
-                         data-tel="${row.personal_tel || ''}"  
-                         data-dpi="${row.personal_dpi || ''}"  
-                         data-correo="${row.personal_correo || ''}"
-                         data-direccion="${row.personal_direccion || ''}"
-                         data-rango="${row.personal_rango || ''}"
-                         data-unidad="${row.personal_unidad || ''}"
+                         data-app="${row.app_id || ''}"  
+                         data-tipo="${row.permiso_tipo || ''}"  
+                         data-desc="${row.permiso_desc || ''}"
                          title="Modificar">
                          <i class='bi bi-pencil-square me-1'></i> Modificar
                      </button>
@@ -312,17 +256,10 @@ const datatable = new DataTable('#TableComisionPersonal', {
 const llenarFormulario = (event) => {
     const datos = event.currentTarget.dataset;
 
-    document.getElementById('personal_id').value = datos.id;
-    document.getElementById('personal_nom1').value = datos.nom1;
-    document.getElementById('personal_nom2').value = datos.nom2;
-    document.getElementById('personal_ape1').value = datos.ape1;
-    document.getElementById('personal_ape2').value = datos.ape2;
-    document.getElementById('personal_tel').value = datos.tel;
-    document.getElementById('personal_dpi').value = datos.dpi;
-    document.getElementById('personal_correo').value = datos.correo;
-    document.getElementById('personal_direccion').value = datos.direccion;
-    document.getElementById('personal_rango').value = datos.rango;
-    document.getElementById('personal_unidad').value = datos.unidad;
+    document.getElementById('permiso_id').value = datos.id;
+    document.getElementById('app_id').value = datos.app;
+    document.getElementById('permiso_tipo').value = datos.tipo;
+    document.getElementById('permiso_desc').value = datos.desc;
 
     BtnGuardar.classList.add('d-none');
     BtnModificar.classList.remove('d-none');
@@ -333,17 +270,17 @@ const llenarFormulario = (event) => {
 }
 
 const limpiarTodo = () => {
-    formComisionPersonal.reset();
+    formPermiso.reset();
     BtnGuardar.classList.remove('d-none');
     BtnModificar.classList.add('d-none');
 }
 
-const ModificarPersonal = async (event) => {
+const ModificarPermiso = async (event) => {
     event.preventDefault();
-    if (!await validarPermisoAccion('COMISIONPERSONAL', 'modificar')) return;
+    if (!await validarPermisoAccion('PERMISOS', 'modificar')) return;
     BtnModificar.disabled = true;
 
-    if (!validarFormulario(formComisionPersonal, ['personal_id', 'personal_situacion'])) {
+    if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_situacion'])) {
         Swal.fire({
             position: "center",
             icon: "info",
@@ -355,8 +292,8 @@ const ModificarPersonal = async (event) => {
         return;
     }
 
-    const body = new FormData(formComisionPersonal);
-    const url = '/lopez_recuperacion_comisiones_ingSoft1/comisionpersonal/modificarAPI';
+    const body = new FormData(formPermiso);
+    const url = '/lopez_recuperacion_comisiones_ingSoft1/permisos/modificarAPI';
     const config = {
         method: 'POST',
         body
@@ -377,7 +314,7 @@ const ModificarPersonal = async (event) => {
             });
 
             limpiarTodo();
-            BuscarPersonal();
+            BuscarPermisos();
         } else {
             await Swal.fire({
                 position: "center",
@@ -394,9 +331,9 @@ const ModificarPersonal = async (event) => {
     BtnModificar.disabled = false;
 }
 
-const EliminarPersonal = async (e) => {
-    if (!await validarPermisoAccion('COMISIONPERSONAL', 'eliminar')) return;
-    const idPersonal = e.currentTarget.dataset.id;
+const EliminarPermisos = async (e) => {
+    if (!await validarPermisoAccion('PERMISOS', 'eliminar')) return;
+    const idPermiso = e.currentTarget.dataset.id;
 
     const AlertaConfirmarEliminar = await Swal.fire({
         position: "center",
@@ -411,7 +348,7 @@ const EliminarPersonal = async (e) => {
     });
 
     if (AlertaConfirmarEliminar.isConfirmed) {
-        const url = `/lopez_recuperacion_comisiones_ingSoft1/comisionpersonal/eliminar?id=${idPersonal}`;
+        const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/eliminar?id=${idPermiso}`;
         const config = {
             method: 'GET'
         }
@@ -430,7 +367,7 @@ const EliminarPersonal = async (e) => {
                     showConfirmButton: true,
                 });
                 
-                BuscarPersonal();
+                BuscarPermisos();
             } else {
                 await Swal.fire({
                     position: "center",
@@ -447,13 +384,14 @@ const EliminarPersonal = async (e) => {
     }
 }
 
-datatable.on('click', '.eliminar', EliminarPersonal);
+datatable.on('click', '.eliminar', EliminarPermisos);
 datatable.on('click', '.modificar', llenarFormulario);
-formComisionPersonal.addEventListener('submit', guardarPersonal);
-
-InputPersonalTel.addEventListener('change', ValidarTelefono);
-InputPersonalDpi.addEventListener('change', ValidarDpi);
+formPermiso.addEventListener('submit', guardarPermiso);
 
 BtnLimpiar.addEventListener('click', limpiarTodo);
-BtnModificar.addEventListener('click', ModificarPersonal);
-BtnBuscarPersonal.addEventListener('click', MostrarTabla);
+BtnModificar.addEventListener('click', ModificarPermiso);
+BtnBuscarPermisos.addEventListener('click', MostrarTabla);
+
+document.addEventListener('DOMContentLoaded', function() {
+    cargarAplicaciones();
+});

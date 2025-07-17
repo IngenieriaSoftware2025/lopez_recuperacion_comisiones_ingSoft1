@@ -112,7 +112,7 @@ class AplicacionController extends ActiveRecord
             $resultado = $aplicacion->crear();
 
             if($resultado['resultado'] == 1){
-                HistorialActController::registrarActividad('APLICACIONES', 'CREAR', 'Registró aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/guardar');
+              //  HistorialActController::registrarActividad('APLICACIONES', 'CREAR', 'Registró aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/guardar');
                 
                 http_response_code(200);
                 echo json_encode([
@@ -273,7 +273,7 @@ class AplicacionController extends ActiveRecord
             
             $resultado = self::SQL($sql);
 
-            HistorialActController::registrarActividad('APLICACIONES', 'ACTUALIZAR', 'Modificó aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/modificar');
+            //HistorialActController::registrarActividad('APLICACIONES', 'ACTUALIZAR', 'Modificó aplicación: ' . $_POST['app_nombre_largo'], 'aplicacion/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -324,7 +324,7 @@ class AplicacionController extends ActiveRecord
             $ejecutar = Aplicacion::EliminarAplicaciones($id);
 
             if ($aplicacion_data) {
-                HistorialActController::registrarActividad('APLICACIONES', 'ELIMINAR', 'Eliminó aplicación: ' . $aplicacion_data['app_nombre_largo'], 'aplicacion/eliminar');
+              //  HistorialActController::registrarActividad('APLICACIONES', 'ELIMINAR', 'Eliminó aplicación: ' . $aplicacion_data['app_nombre_largo'], 'aplicacion/eliminar');
             }
 
             http_response_code(200);

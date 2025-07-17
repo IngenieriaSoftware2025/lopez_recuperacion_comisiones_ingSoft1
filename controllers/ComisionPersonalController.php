@@ -155,7 +155,7 @@ class ComisionPersonalController extends ActiveRecord
             if($resultado['resultado'] == 1){
                 $nombre_completo = $_POST['personal_nom1'] . ' ' . $_POST['personal_ape1'];
                 
-                HistorialActController::registrarActividad('COMISION_PERSONAL', 'CREAR', 'Registró personal: ' . $nombre_completo, 'comisionpersonal/guardar');
+               // HistorialActController::registrarActividad('COMISION_PERSONAL', 'CREAR', 'Registró personal: ' . $nombre_completo, 'comisionpersonal/guardar');
                 
                 http_response_code(200);
                 echo json_encode([
@@ -357,7 +357,7 @@ class ComisionPersonalController extends ActiveRecord
 
             $nombre_completo = $_POST['personal_nom1'] . ' ' . $_POST['personal_ape1'];
             
-            HistorialActController::registrarActividad('COMISION_PERSONAL', 'ACTUALIZAR', 'Modificó personal: ' . $nombre_completo, 'comisionpersonal/modificar');
+           // HistorialActController::registrarActividad('COMISION_PERSONAL', 'ACTUALIZAR', 'Modificó personal: ' . $nombre_completo, 'comisionpersonal/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -388,7 +388,7 @@ class ComisionPersonalController extends ActiveRecord
             if ($personal_data) {
                 $nombre_completo = $personal_data['personal_nom1'] . ' ' . $personal_data['personal_ape1'];
                 
-                HistorialActController::registrarActividad('COMISION_PERSONAL', 'ELIMINAR', 'Eliminó personal: ' . $nombre_completo, 'comisionpersonal/eliminar');
+               // HistorialActController::registrarActividad('COMISION_PERSONAL', 'ELIMINAR', 'Eliminó personal: ' . $nombre_completo, 'comisionpersonal/eliminar');
             }
 
             http_response_code(200);
