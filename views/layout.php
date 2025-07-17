@@ -33,6 +33,9 @@
                         <a class="nav-link" aria-current="page" href="/lopez_recuperacion_comisiones_ingSoft1/aplicacion"><i class="bi bi-house-fill me-2"></i>Aplicacion</a>
                     </li>
   
+                    <li class="nav-item">
+                        <a class="nav-link" aria-current="page" href="/lopez_recuperacion_comisiones_ingSoft1/comisionpersonal"><i class="bi bi-house-fill me-2"></i>Asignacion de comisiones</a>
+                    </li>
                     <div class="nav-item dropdown " >
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                             <i class="bi bi-gear me-2"></i>Dropdown

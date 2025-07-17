@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/app.php';
 use Controllers\AplicacionController;
 use MVC\Router;
 use Controllers\AppController;
+use Controllers\ComisionPersonalController;
 use Controllers\UsuarioController;
 
 $router = new Router();
@@ -26,6 +27,13 @@ $router->post('/aplicacion/guardarAPI', [AplicacionController::class, 'guardarAP
 $router->get('/aplicacion/buscarAPI', [AplicacionController::class, 'buscarAPI']);
 $router->post('/aplicacion/modificarAPI', [AplicacionController::class, 'modificarAPI']);
 $router->get('/aplicacion/eliminar', [AplicacionController::class, 'EliminarAPI']);
+
+// PERSONAL COMISIONES
+$router->get('/comisionpersonal', [ComisionPersonalController::class, 'renderizarPagina']);
+$router->post('/comisionpersonal/guardarAPI', [ComisionPersonalController::class, 'guardarAPI']);
+$router->get('/comisionpersonal/buscarAPI', [ComisionPersonalController::class, 'buscarAPI']);
+$router->post('/comisionpersonal/modificarAPI', [ComisionPersonalController::class, 'modificarAPI']);
+$router->get('/comisionpersonal/eliminar', [ComisionPersonalController::class, 'EliminarAPI']);
 
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
