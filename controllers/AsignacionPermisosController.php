@@ -16,6 +16,170 @@ class AsignacionPermisosController extends ActiveRecord
         $router->render('asignacionpermisos/index', []);
     }
 
+    // MÉTODO CORREGIDO PARA INFORMIX: Usuarios
+    public static function buscarUsuariosAPI()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
+        try {
+            // Consulta básica para Informix - sin verificar estructura
+            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1, usuario_rol 
+                    FROM pmlx_usuario 
+                    WHERE usuario_situacion = 1";
+            
+            error_log("SQL Usuarios: " . $sql);
+            $data = self::fetchArray($sql);
+            error_log("Resultado usuarios: " . print_r($data, true));
+
+            // Filtrar solo usuarios regulares si existe el campo rol
+            $usuarios_filtrados = [];
+            foreach ($data as $usuario) {
+                // Si no tiene rol o el rol es 'usuario', incluirlo
+                if (!isset($usuario['usuario_rol']) || 
+                    $usuario['usuario_rol'] == 'usuario' || 
+                    $usuario['usuario_rol'] == '' || 
+                    $usuario['usuario_rol'] == null) {
+                    $usuarios_filtrados[] = $usuario;
+                }
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 1,
+                'mensaje' => 'Usuarios obtenidos correctamente',
+                'data' => $usuarios_filtrados
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error en buscarUsuariosAPI: " . $e->getMessage());
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Error al obtener los usuarios: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    }
+
+    // MÉTODO CORREGIDO PARA INFORMIX: Administradores
+    public static function buscarAdministradoresAPI()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
+        try {
+            // Consulta básica para Informix
+            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1, usuario_rol 
+                    FROM pmlx_usuario 
+                    WHERE usuario_situacion = 1";
+            
+            error_log("SQL Administradores: " . $sql);
+            $data = self::fetchArray($sql);
+            error_log("Resultado administradores: " . print_r($data, true));
+
+            // Filtrar administradores en PHP
+            $administradores = [];
+            foreach ($data as $usuario) {
+                // Si tiene rol de administrador o no especifica rol (asumir que puede ser admin)
+                if (isset($usuario['usuario_rol']) && $usuario['usuario_rol'] == 'administrador') {
+                    $administradores[] = $usuario;
+                } else if (!isset($usuario['usuario_rol']) || $usuario['usuario_rol'] == '') {
+                    // Si no hay rol definido, incluir todos (puedes cambiar esta lógica)
+                    $administradores[] = $usuario;
+                }
+            }
+
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 1,
+                'mensaje' => 'Administradores obtenidos correctamente',
+                'data' => $administradores
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error en buscarAdministradoresAPI: " . $e->getMessage());
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Error al obtener los administradores: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    }
+
+    // MÉTODO CORREGIDO PARA INFORMIX: Aplicaciones
+    public static function buscarAplicacionesAPI()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
+        try {
+            $sql = "SELECT app_id, app_nombre_corto FROM pmlx_aplicacion WHERE app_situacion = 1 ORDER BY app_nombre_corto";
+            error_log("SQL Aplicaciones: " . $sql);
+            $data = self::fetchArray($sql);
+            error_log("Resultado aplicaciones: " . print_r($data, true));
+
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 1,
+                'mensaje' => 'Aplicaciones obtenidas correctamente',
+                'data' => $data
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error en buscarAplicacionesAPI: " . $e->getMessage());
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Error al obtener las aplicaciones: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    }
+
+    public static function buscarPermisosAPI()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
+        try {
+            $app_id = isset($_GET['app_id']) ? (int)$_GET['app_id'] : null;
+
+            if ($app_id && $app_id > 0) {
+                $sql = "SELECT permiso_id, permiso_tipo, permiso_desc, app_id
+                        FROM pmlx_permiso 
+                        WHERE app_id = $app_id AND permiso_situacion = 1 
+                        ORDER BY permiso_tipo";
+            } else {
+                $sql = "SELECT permiso_id, permiso_tipo, permiso_desc, app_id
+                        FROM pmlx_permiso 
+                        WHERE permiso_situacion = 1 
+                        ORDER BY permiso_tipo";
+            }
+            
+            error_log("SQL Permisos: " . $sql);
+            $data = self::fetchArray($sql);
+            error_log("Resultado permisos: " . print_r($data, true));
+
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 1,
+                'mensaje' => 'Permisos obtenidos correctamente',
+                'data' => $data
+            ]);
+
+        } catch (Exception $e) {
+            error_log("Error en buscarPermisosAPI: " . $e->getMessage());
+            http_response_code(200);
+            echo json_encode([
+                'codigo' => 0,
+                'mensaje' => 'Error al obtener los permisos: ' . $e->getMessage(),
+                'data' => []
+            ]);
+        }
+    }
+
     public static function guardarAPI()
     {
         header('Content-Type: application/json; charset=utf-8');
@@ -84,7 +248,12 @@ class AsignacionPermisosController extends ActiveRecord
                 exit;
             }
 
-            $verificarPermisoExiste = self::fetchArray("SELECT permiso_id FROM pmlx_permiso WHERE permiso_id = {$_POST['asignacion_permiso_id']} AND app_id = {$_POST['asignacion_app_id']} AND permiso_situacion = 1");
+            // Verificaciones para Informix - usar prepared statements si es posible
+            $usuario_id = (int)$_POST['asignacion_usuario_id'];
+            $app_id = (int)$_POST['asignacion_app_id'];
+            $permiso_id = (int)$_POST['asignacion_permiso_id'];
+
+            $verificarPermisoExiste = self::fetchArray("SELECT permiso_id FROM pmlx_permiso WHERE permiso_id = $permiso_id AND app_id = $app_id AND permiso_situacion = 1");
 
             if (count($verificarPermisoExiste) == 0) {
                 http_response_code(400);
@@ -95,7 +264,7 @@ class AsignacionPermisosController extends ActiveRecord
                 exit;
             }
 
-            $verificarDuplicado = self::fetchArray("SELECT asignacion_id FROM pmlx_asig_permisos WHERE asignacion_usuario_id = {$_POST['asignacion_usuario_id']} AND asignacion_permiso_id = {$_POST['asignacion_permiso_id']} AND asignacion_situacion = 1");
+            $verificarDuplicado = self::fetchArray("SELECT asignacion_id FROM pmlx_asig_permisos WHERE asignacion_usuario_id = $usuario_id AND asignacion_permiso_id = $permiso_id AND asignacion_situacion = 1");
 
             if (count($verificarDuplicado) > 0) {
                 http_response_code(400);
@@ -106,13 +275,13 @@ class AsignacionPermisosController extends ActiveRecord
                 exit;
             }
 
-            $sql_usuario = "SELECT usuario_nom1, usuario_ape1 FROM pmlx_usuario WHERE usuario_id = {$_POST['asignacion_usuario_id']}";
+            $sql_usuario = "SELECT usuario_nom1, usuario_ape1 FROM pmlx_usuario WHERE usuario_id = $usuario_id";
             $usuario_data = self::fetchFirst($sql_usuario);
             
-            $sql_app = "SELECT app_nombre_corto FROM pmlx_aplicacion WHERE app_id = {$_POST['asignacion_app_id']}";
+            $sql_app = "SELECT app_nombre_corto FROM pmlx_aplicacion WHERE app_id = $app_id";
             $app_data = self::fetchFirst($sql_app);
             
-            $sql_permiso = "SELECT permiso_tipo FROM pmlx_permiso WHERE permiso_id = {$_POST['asignacion_permiso_id']}";
+            $sql_permiso = "SELECT permiso_tipo FROM pmlx_permiso WHERE permiso_id = $permiso_id";
             $permiso_data = self::fetchFirst($sql_permiso);
             
            $asignacion = new AsignacionPermisos($_POST);
@@ -157,7 +326,13 @@ class AsignacionPermisosController extends ActiveRecord
         
         try {
             $sql = "SELECT 
-                        ap.*,
+                        ap.asignacion_id,
+                        ap.asignacion_usuario_id,
+                        ap.asignacion_app_id,
+                        ap.asignacion_permiso_id,
+                        ap.asignacion_usuario_asigno,
+                        ap.asignacion_motivo,
+                        ap.asignacion_situacion,
                         u.usuario_nom1,
                         u.usuario_ape1,
                         a.app_nombre_corto,
@@ -171,8 +346,11 @@ class AsignacionPermisosController extends ActiveRecord
                     INNER JOIN pmlx_permiso p ON ap.asignacion_permiso_id = p.permiso_id
                     INNER JOIN pmlx_usuario ua ON ap.asignacion_usuario_asigno = ua.usuario_id
                     WHERE ap.asignacion_situacion = 1 
-                    ORDER BY ap.asignacion_fecha_creacion DESC";
+                    ORDER BY ap.asignacion_id DESC";
+            
+            error_log("SQL buscarAPI: " . $sql);
             $data = self::fetchArray($sql);
+            error_log("Resultado buscarAPI: " . print_r($data, true));
 
             http_response_code(200);
             echo json_encode([
@@ -182,6 +360,7 @@ class AsignacionPermisosController extends ActiveRecord
             ]);
 
         } catch (Exception $e) {
+            error_log("Error en buscarAPI: " . $e->getMessage());
             http_response_code(400);
             echo json_encode([
                 'codigo' => 0,
@@ -198,7 +377,7 @@ class AsignacionPermisosController extends ActiveRecord
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
         header('Access-Control-Allow-Headers: Content-Type');
 
-        $id = $_POST['asignacion_id'];
+        $id = (int)$_POST['asignacion_id'];
         
         $_POST['asignacion_usuario_id'] = filter_var($_POST['asignacion_usuario_id'], FILTER_SANITIZE_NUMBER_INT);
         
@@ -258,7 +437,13 @@ class AsignacionPermisosController extends ActiveRecord
         }
 
         try {
-            $verificarPermisoExiste = self::fetchArray("SELECT permiso_id FROM pmlx_permiso WHERE permiso_id = {$_POST['asignacion_permiso_id']} AND app_id = {$_POST['asignacion_app_id']} AND permiso_situacion = 1");
+            $usuario_id = (int)$_POST['asignacion_usuario_id'];
+            $app_id = (int)$_POST['asignacion_app_id'];
+            $permiso_id = (int)$_POST['asignacion_permiso_id'];
+            $usuario_asigno = (int)$_POST['asignacion_usuario_asigno'];
+            $motivo = $_POST['asignacion_motivo'];
+
+            $verificarPermisoExiste = self::fetchArray("SELECT permiso_id FROM pmlx_permiso WHERE permiso_id = $permiso_id AND app_id = $app_id AND permiso_situacion = 1");
 
             if (count($verificarPermisoExiste) == 0) {
                 http_response_code(400);
@@ -269,7 +454,7 @@ class AsignacionPermisosController extends ActiveRecord
                 return;
             }
 
-            $verificarDuplicado = self::fetchArray("SELECT asignacion_id FROM pmlx_asig_permisos WHERE asignacion_usuario_id = {$_POST['asignacion_usuario_id']} AND asignacion_permiso_id = {$_POST['asignacion_permiso_id']} AND asignacion_situacion = 1 AND asignacion_id != {$id}");
+            $verificarDuplicado = self::fetchArray("SELECT asignacion_id FROM pmlx_asig_permisos WHERE asignacion_usuario_id = $usuario_id AND asignacion_permiso_id = $permiso_id AND asignacion_situacion = 1 AND asignacion_id != $id");
 
             if (count($verificarDuplicado) > 0) {
                 http_response_code(400);
@@ -280,22 +465,22 @@ class AsignacionPermisosController extends ActiveRecord
                 return;
             }
 
-            $sql_usuario = "SELECT usuario_nom1, usuario_ape1 FROM pmlx_usuario WHERE usuario_id = {$_POST['asignacion_usuario_id']}";
+            $sql_usuario = "SELECT usuario_nom1, usuario_ape1 FROM pmlx_usuario WHERE usuario_id = $usuario_id";
             $usuario_data = self::fetchFirst($sql_usuario);
             
-            $sql_app = "SELECT app_nombre_corto FROM pmlx_aplicacion WHERE app_id = {$_POST['asignacion_app_id']}";
+            $sql_app = "SELECT app_nombre_corto FROM pmlx_aplicacion WHERE app_id = $app_id";
             $app_data = self::fetchFirst($sql_app);
             
-            $sql_permiso = "SELECT permiso_tipo FROM pmlx_permiso WHERE permiso_id = {$_POST['asignacion_permiso_id']}";
+            $sql_permiso = "SELECT permiso_tipo FROM pmlx_permiso WHERE permiso_id = $permiso_id";
             $permiso_data = self::fetchFirst($sql_permiso);
 
             $sql = "UPDATE pmlx_asig_permisos SET 
-                    asignacion_usuario_id = '{$_POST['asignacion_usuario_id']}',
-                    asignacion_app_id = '{$_POST['asignacion_app_id']}',
-                    asignacion_permiso_id = '{$_POST['asignacion_permiso_id']}',
-                    asignacion_usuario_asigno = '{$_POST['asignacion_usuario_asigno']}',
-                    asignacion_motivo = '{$_POST['asignacion_motivo']}'
-                    WHERE asignacion_id = {$id}";
+                    asignacion_usuario_id = $usuario_id,
+                    asignacion_app_id = $app_id,
+                    asignacion_permiso_id = $permiso_id,
+                    asignacion_usuario_asigno = $usuario_asigno,
+                    asignacion_motivo = '$motivo'
+                    WHERE asignacion_id = $id";
             
             $resultado = self::SQL($sql);
 
@@ -358,129 +543,6 @@ class AsignacionPermisosController extends ActiveRecord
             echo json_encode([
                 'codigo' => 0,
                 'mensaje' => 'Error al eliminar la asignación',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarUsuariosAPI()
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        
-        try {
-            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
-                    FROM pmlx_usuario 
-                    WHERE usuario_situacion = 1 AND usuario_rol = 'usuario'
-                    ORDER BY usuario_nom1";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Usuarios obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los usuarios',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarAplicacionesAPI()
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        
-        try {
-            $sql = "SELECT app_id, app_nombre_corto FROM pmlx_aplicacion WHERE app_situacion = 1 ORDER BY app_nombre_corto";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Aplicaciones obtenidas correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener las aplicaciones',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarPermisosAPI()
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        
-        try {
-            $app_id = isset($_GET['app_id']) ? $_GET['app_id'] : null;
-
-            if ($app_id) {
-                $sql = "SELECT permiso_id, permiso_tipo, permiso_desc, app_id
-                        FROM pmlx_permiso 
-                        WHERE app_id = {$app_id} AND permiso_situacion = 1 
-                        ORDER BY permiso_tipo";
-            } else {
-                $sql = "SELECT permiso_id, permiso_tipo, permiso_desc, app_id
-                        FROM pmlx_permiso 
-                        WHERE permiso_situacion = 1 
-                        ORDER BY permiso_tipo";
-            }
-            
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Permisos obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los permisos',
-                'detalle' => $e->getMessage(),
-            ]);
-        }
-    }
-
-    public static function buscarAdministradoresAPI()
-    {
-        header('Content-Type: application/json; charset=utf-8');
-        header('Access-Control-Allow-Origin: *');
-        
-        try {
-            $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
-                    FROM pmlx_usuario 
-                    WHERE usuario_situacion = 1 AND usuario_rol = 'administrador'
-                    ORDER BY usuario_nom1";
-            $data = self::fetchArray($sql);
-
-            http_response_code(200);
-            echo json_encode([
-                'codigo' => 1,
-                'mensaje' => 'Administradores obtenidos correctamente',
-                'data' => $data
-            ]);
-
-        } catch (Exception $e) {
-            http_response_code(400);
-            echo json_encode([
-                'codigo' => 0,
-                'mensaje' => 'Error al obtener los administradores',
                 'detalle' => $e->getMessage(),
             ]);
         }
