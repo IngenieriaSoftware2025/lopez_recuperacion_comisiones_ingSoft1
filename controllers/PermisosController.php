@@ -18,9 +18,15 @@ class PermisosController extends ActiveRecord
 
     public static function guardarAPI()
     {
-        getHeadersApi();
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+        header('Access-Control-Allow-Headers: Content-Type');
     
         try {
+            // DEBUG: Log para ver qué llega
+            error_log("POST recibido: " . print_r($_POST, true));
+            
             $_POST['app_id'] = filter_var($_POST['app_id'], FILTER_SANITIZE_NUMBER_INT);
             
             if ($_POST['app_id'] <= 0) {
@@ -116,6 +122,9 @@ class PermisosController extends ActiveRecord
 
     public static function buscarAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $sql = "SELECT 
                         p.*,
@@ -145,7 +154,10 @@ class PermisosController extends ActiveRecord
 
     public static function modificarAPI()
     {
-        getHeadersApi();
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+        header('Access-Control-Allow-Headers: Content-Type');
 
         $id = $_POST['permiso_id'];
         
@@ -239,6 +251,9 @@ class PermisosController extends ActiveRecord
 
     public static function EliminarAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
             
@@ -284,8 +299,12 @@ class PermisosController extends ActiveRecord
 
     public static function buscarAplicacionesAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
-            $sql = "SELECT app_id, app_nombre_corto FROM pmxl_aplicacion WHERE app_situacion = 1 ORDER BY app_nombre_corto";
+            // CORREGIDO: Era "pmxl_aplicacion" ahora es "pmlx_aplicacion"
+            $sql = "SELECT app_id, app_nombre_corto FROM pmlx_aplicacion WHERE app_situacion = 1 ORDER BY app_nombre_corto";
             $data = self::fetchArray($sql);
 
             http_response_code(200);

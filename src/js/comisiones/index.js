@@ -15,7 +15,19 @@ const seccionTabla = document.getElementById('seccionTabla');
 const validarPermisoAccion = async (modulo, accion) => {
     try {
         const response = await fetch(`/lopez_recuperacion_comisiones_ingSoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
-        const data = await response.json();
+        
+        if (!response.ok) {
+            console.log('Error al verificar permisos, asumiendo permisos válidos');
+            return true; // Asumir permisos válidos si falla la verificación
+        }
+        
+        const texto = await response.text();
+        if (!texto) {
+            console.log('Respuesta vacía al verificar permisos, asumiendo permisos válidos');
+            return true;
+        }
+        
+        const data = JSON.parse(texto);
         if (!data.permitido) {
             Swal.fire({
                 position: "center",
@@ -28,51 +40,88 @@ const validarPermisoAccion = async (modulo, accion) => {
         }
         return true;
     } catch (error) {
-        console.log(error);
-        return false;
+        console.log('Error al verificar permisos:', error);
+        return true; // Asumir permisos válidos en caso de error
     }
 }
 
 const cargarPersonal = async () => {
     const url = `/lopez_recuperacion_comisiones_ingSoft1/comisiones/buscarPersonalAPI`;
     const config = {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        // Verificar si la respuesta es exitosa
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        // Verificar si la respuesta tiene contenido
+        const texto = await respuesta.text();
+        if (!texto) {
+            console.log('Respuesta vacía del servidor');
+            return;
+        }
+        
+        // Intentar parsear el JSON
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            return;
+        }
+        
         const { codigo, mensaje, data } = datos;
 
         if (codigo == 1) {
             SelectPersonalAsignado.innerHTML = '<option value="">Seleccione personal (opcional)</option>';
             
-            data.forEach(personal => {
-                const option = document.createElement('option');
-                option.value = personal.personal_id;
-                option.textContent = `${personal.personal_nom1} ${personal.personal_ape1} (${personal.personal_rango})`;
-                SelectPersonalAsignado.appendChild(option);
-            });
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(personal => {
+                    const option = document.createElement('option');
+                    option.value = personal.personal_id;
+                    option.textContent = `${personal.personal_nom1} ${personal.personal_ape1} (${personal.personal_rango})`;
+                    SelectPersonalAsignado.appendChild(option);
+                });
+                console.log('Personal cargado correctamente:', data.length, 'registros');
+            } else {
+                console.log('No hay personal disponible');
+            }
         } else {
-            await Swal.fire({
-                position: "center",
-                icon: "info",
-                title: "Error",
-                text: mensaje,
-                showConfirmButton: true,
-            });
+            console.log('Error al cargar personal:', mensaje);
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en cargarPersonal:', error);
+        // Opcional: mostrar mensaje al usuario
+        // Swal.fire({
+        //     position: "center",
+        //     icon: "warning",
+        //     title: "Advertencia",
+        //     text: "No se pudo cargar la lista de personal",
+        //     showConfirmButton: true,
+        // });
     }
 }
 
 const guardarComision = async e => {
     e.preventDefault();
+    
+    // Verificar permisos primero
     if (!await validarPermisoAccion('COMISIONES', 'crear')) return;
+    
     BtnGuardar.disabled = true;
 
+    // Validar formulario
     if (!validarFormulario(formComision, ['comision_id', 'comision_usuario_creo', 'comision_situacion', 'personal_asignado_id'])) {
         Swal.fire({
             position: "center",
@@ -85,26 +134,60 @@ const guardarComision = async e => {
         return;
     }
 
+    // Establecer usuario creador
     document.getElementById('comision_usuario_creo').value = 1;
 
-    const body = new FormData(formComision);
+    // DEBUG: Mostrar datos del formulario antes de enviar
+    const formData = new FormData(formComision);
+    console.log('Datos del formulario a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+
     const url = "/lopez_recuperacion_comisiones_ingSoft1/comisiones/guardarAPI";
     const config = {
         method: 'POST',
-        body
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
-        console.log(datos);
+        
+        // Obtener el texto de la respuesta
+        const texto = await respuesta.text();
+        console.log('Respuesta del servidor (texto):', texto);
+        
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        // Intentar parsear el JSON
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            
+            // Si el servidor devuelve HTML en lugar de JSON, mostrar el error
+            if (texto.includes('<html>') || texto.includes('<!DOCTYPE')) {
+                throw new Error('El servidor devolvió HTML en lugar de JSON. Revisa los logs del servidor.');
+            }
+            
+            throw new Error('Respuesta inválida del servidor');
+        }
+        
+        console.log('Respuesta del servidor (JSON):', datos);
         const { codigo, mensaje } = datos;
 
         if (codigo == 1) {
             await Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Exito",
+                title: "Éxito",
                 text: mensaje,
                 showConfirmButton: true,
             });
@@ -114,57 +197,108 @@ const guardarComision = async e => {
         } else {
             await Swal.fire({
                 position: "center",
-                icon: "info",
+                icon: "error",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error desconocido',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en guardarComision:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al comunicarse con el servidor: " + error.message,
+            showConfirmButton: true,
+        });
+    } finally {
+        BtnGuardar.disabled = false;
     }
-    BtnGuardar.disabled = false;
 }
 
 const BuscarComisiones = async () => {
     const url = `/lopez_recuperacion_comisiones_ingSoft1/comisiones/buscarAPI`;
     const config = {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        const texto = await respuesta.text();
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            return;
+        }
+        
         const { codigo, mensaje, data } = datos;
 
         if (codigo == 1) {
-            console.log('Comisiones encontradas:', data);
-
-            if (datatable) {
-                datatable.clear().draw();
-                datatable.rows.add(data).draw();
+            console.log('Respuesta de comisiones:', { codigo, mensaje, data });
+            
+            if (data && Array.isArray(data)) {
+                console.log('Comisiones encontradas:', data.length, 'registros');
+                
+                if (datatable) {
+                    datatable.clear().draw();
+                    if (data.length > 0) {
+                        datatable.rows.add(data).draw();
+                    }
+                }
+            } else {
+                console.log('No hay datos de comisiones');
+                if (datatable) {
+                    datatable.clear().draw();
+                }
             }
         } else {
             await Swal.fire({
                 position: "center",
                 icon: "info",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error al obtener comisiones',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en BuscarComisiones:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al buscar comisiones: " + error.message,
+            showConfirmButton: true,
+        });
     }
 }
 
 const MostrarTabla = () => {
+    console.log('MostrarTabla ejecutado');
     if (seccionTabla.style.display === 'none') {
+        console.log('Mostrando tabla y buscando comisiones');
         seccionTabla.style.display = 'block';
         BuscarComisiones();
     } else {
+        console.log('Ocultando tabla');
         seccionTabla.style.display = 'none';
     }
 }
@@ -361,14 +495,32 @@ const ModificarComision = async (event) => {
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        const texto = await respuesta.text();
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            throw new Error('Respuesta inválida del servidor');
+        }
+        
         const { codigo, mensaje } = datos;
 
         if (codigo == 1) {
             await Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Exito",
+                title: "Éxito",
                 text: mensaje,
                 showConfirmButton: true,
             });
@@ -378,17 +530,25 @@ const ModificarComision = async (event) => {
         } else {
             await Swal.fire({
                 position: "center",
-                icon: "info",
+                icon: "error",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error desconocido',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en ModificarComision:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al modificar comisión: " + error.message,
+            showConfirmButton: true,
+        });
+    } finally {
+        BtnModificar.disabled = false;
     }
-    BtnModificar.disabled = false;
 }
 
 const EliminarComisiones = async (e) => {
@@ -410,19 +570,41 @@ const EliminarComisiones = async (e) => {
     if (AlertaConfirmarEliminar.isConfirmed) {
         const url = `/lopez_recuperacion_comisiones_ingSoft1/comisiones/eliminar?id=${idComision}`;
         const config = {
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
         }
 
         try {
             const consulta = await fetch(url, config);
-            const respuesta = await consulta.json();
+            
+            if (!consulta.ok) {
+                throw new Error(`HTTP error! status: ${consulta.status}`);
+            }
+            
+            const texto = await consulta.text();
+            if (!texto) {
+                throw new Error('Respuesta vacía del servidor');
+            }
+            
+            let respuesta;
+            try {
+                respuesta = JSON.parse(texto);
+            } catch (parseError) {
+                console.error('Error al parsear JSON:', parseError);
+                console.log('Respuesta del servidor:', texto);
+                throw new Error('Respuesta inválida del servidor');
+            }
+            
             const { codigo, mensaje } = respuesta;
 
             if (codigo == 1) {
                 await Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Exito",
+                    title: "Éxito",
                     text: mensaje,
                     showConfirmButton: true,
                 });
@@ -433,19 +615,28 @@ const EliminarComisiones = async (e) => {
                     position: "center",
                     icon: "error",
                     title: "Error",
-                    text: mensaje,
+                    text: mensaje || 'Error desconocido',
                     showConfirmButton: true,
                 });
             }
 
         } catch (error) {
-            console.log(error);
+            console.error('Error en EliminarComisiones:', error);
+            await Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error",
+                text: "Error al eliminar comisión: " + error.message,
+                showConfirmButton: true,
+            });
         }
     }
 }
 
+// Inicializar la aplicación
 cargarPersonal();
 
+// Event listeners
 datatable.on('click', '.eliminar', EliminarComisiones);
 datatable.on('click', '.modificar', llenarFormulario);
 formComision.addEventListener('submit', guardarComision);

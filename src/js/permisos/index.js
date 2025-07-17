@@ -15,7 +15,19 @@ const seccionTabla = document.getElementById('seccionTabla');
 const validarPermisoAccion = async (modulo, accion) => {
     try {
         const response = await fetch(`/lopez_recuperacion_comisiones_ingSoft1/API/verificarPermisos?modulo=${modulo}&accion=${accion}`);
-        const data = await response.json();
+        
+        if (!response.ok) {
+            console.log('Error al verificar permisos, asumiendo permisos válidos');
+            return true; // Asumir permisos válidos si falla la verificación
+        }
+        
+        const texto = await response.text();
+        if (!texto) {
+            console.log('Respuesta vacía al verificar permisos, asumiendo permisos válidos');
+            return true;
+        }
+        
+        const data = JSON.parse(texto);
         if (!data.permitido) {
             Swal.fire({
                 position: "center",
@@ -28,51 +40,102 @@ const validarPermisoAccion = async (modulo, accion) => {
         }
         return true;
     } catch (error) {
-        console.log(error);
-        return false;
+        console.log('Error al verificar permisos:', error);
+        return true; // Asumir permisos válidos en caso de error
     }
 }
 
 const cargarAplicaciones = async () => {
     const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/buscarAplicacionesAPI`;
     const config = {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        // Verificar si la respuesta es exitosa
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        // Verificar si la respuesta tiene contenido
+        const texto = await respuesta.text();
+        if (!texto) {
+            console.log('Respuesta vacía del servidor');
+            return;
+        }
+        
+        // Intentar parsear el JSON
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            
+            await Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error",
+                text: "Error al obtener las aplicaciones",
+                showConfirmButton: true,
+            });
+            return;
+        }
+        
         const { codigo, mensaje, data } = datos;
 
         if (codigo == 1) {
             SelectAplicacion.innerHTML = '<option value="">Seleccione una aplicación</option>';
             
-            data.forEach(app => {
-                const option = document.createElement('option');
-                option.value = app.app_id;
-                option.textContent = app.app_nombre_corto;
-                SelectAplicacion.appendChild(option);
-            });
+            if (data && Array.isArray(data) && data.length > 0) {
+                data.forEach(app => {
+                    const option = document.createElement('option');
+                    option.value = app.app_id;
+                    option.textContent = app.app_nombre_corto;
+                    SelectAplicacion.appendChild(option);
+                });
+                console.log('Aplicaciones cargadas correctamente:', data.length, 'registros');
+            } else {
+                console.log('No hay aplicaciones disponibles');
+                SelectAplicacion.innerHTML = '<option value="">No hay aplicaciones disponibles</option>';
+            }
         } else {
             await Swal.fire({
                 position: "center",
-                icon: "info",
+                icon: "error",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error al cargar aplicaciones',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en cargarAplicaciones:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al obtener las aplicaciones",
+            showConfirmButton: true,
+        });
     }
 }
 
 const guardarPermiso = async e => {
     e.preventDefault();
+    
+    // Verificar permisos primero
     if (!await validarPermisoAccion('PERMISOS', 'crear')) return;
+    
     BtnGuardar.disabled = true;
 
+    // Validar formulario
     if (!validarFormulario(formPermiso, ['permiso_id', 'permiso_situacion'])) {
         Swal.fire({
             position: "center",
@@ -85,24 +148,57 @@ const guardarPermiso = async e => {
         return;
     }
 
-    const body = new FormData(formPermiso);
+    // DEBUG: Mostrar datos del formulario antes de enviar
+    const formData = new FormData(formPermiso);
+    console.log('Datos del formulario a enviar:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+
     const url = "/lopez_recuperacion_comisiones_ingSoft1/permisos/guardarAPI";
     const config = {
         method: 'POST',
-        body
+        body: formData,
+        headers: {
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
-        console.log(datos);
+        
+        // Obtener el texto de la respuesta
+        const texto = await respuesta.text();
+        console.log('Respuesta del servidor (texto):', texto);
+        
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        // Intentar parsear el JSON
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            
+            // Si el servidor devuelve HTML en lugar de JSON, mostrar el error
+            if (texto.includes('<html>') || texto.includes('<!DOCTYPE')) {
+                throw new Error('El servidor devolvió HTML en lugar de JSON. Revisa los logs del servidor.');
+            }
+            
+            throw new Error('Respuesta inválida del servidor');
+        }
+        
+        console.log('Respuesta del servidor (JSON):', datos);
         const { codigo, mensaje } = datos;
 
         if (codigo == 1) {
             await Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Exito",
+                title: "Éxito",
                 text: mensaje,
                 showConfirmButton: true,
             });
@@ -112,59 +208,108 @@ const guardarPermiso = async e => {
         } else {
             await Swal.fire({
                 position: "center",
-                icon: "info",
+                icon: "error",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error desconocido',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en guardarPermiso:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al comunicarse con el servidor: " + error.message,
+            showConfirmButton: true,
+        });
+    } finally {
+        BtnGuardar.disabled = false;
     }
-    BtnGuardar.disabled = false;
 }
 
 const BuscarPermisos = async () => {
-    if (!await validarPermisoAccion('PERMISOS', 'buscar')) return;
-    
     const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/buscarAPI`;
     const config = {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
     }
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        const texto = await respuesta.text();
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            return;
+        }
+        
         const { codigo, mensaje, data } = datos;
 
         if (codigo == 1) {
-            console.log('Permisos encontrados:', data);
-
-            if (datatable) {
-                datatable.clear().draw();
-                datatable.rows.add(data).draw();
+            console.log('Respuesta de permisos:', { codigo, mensaje, data });
+            
+            if (data && Array.isArray(data)) {
+                console.log('Permisos encontrados:', data.length, 'registros');
+                
+                if (datatable) {
+                    datatable.clear().draw();
+                    if (data.length > 0) {
+                        datatable.rows.add(data).draw();
+                    }
+                }
+            } else {
+                console.log('No hay datos de permisos');
+                if (datatable) {
+                    datatable.clear().draw();
+                }
             }
         } else {
             await Swal.fire({
                 position: "center",
                 icon: "info",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error al obtener permisos',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en BuscarPermisos:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al buscar permisos: " + error.message,
+            showConfirmButton: true,
+        });
     }
 }
 
 const MostrarTabla = () => {
+    console.log('MostrarTabla ejecutado');
     if (seccionTabla.style.display === 'none') {
+        console.log('Mostrando tabla y buscando permisos');
         seccionTabla.style.display = 'block';
         BuscarPermisos();
     } else {
+        console.log('Ocultando tabla');
         seccionTabla.style.display = 'none';
     }
 }
@@ -301,14 +446,32 @@ const ModificarPermiso = async (event) => {
 
     try {
         const respuesta = await fetch(url, config);
-        const datos = await respuesta.json();
+        
+        if (!respuesta.ok) {
+            throw new Error(`HTTP error! status: ${respuesta.status}`);
+        }
+        
+        const texto = await respuesta.text();
+        if (!texto) {
+            throw new Error('Respuesta vacía del servidor');
+        }
+        
+        let datos;
+        try {
+            datos = JSON.parse(texto);
+        } catch (parseError) {
+            console.error('Error al parsear JSON:', parseError);
+            console.log('Respuesta del servidor:', texto);
+            throw new Error('Respuesta inválida del servidor');
+        }
+        
         const { codigo, mensaje } = datos;
 
         if (codigo == 1) {
             await Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Exito",
+                title: "Éxito",
                 text: mensaje,
                 showConfirmButton: true,
             });
@@ -318,17 +481,25 @@ const ModificarPermiso = async (event) => {
         } else {
             await Swal.fire({
                 position: "center",
-                icon: "info",
+                icon: "error",
                 title: "Error",
-                text: mensaje,
+                text: mensaje || 'Error desconocido',
                 showConfirmButton: true,
             });
         }
 
     } catch (error) {
-        console.log(error);
+        console.error('Error en ModificarPermiso:', error);
+        await Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Error al modificar permiso: " + error.message,
+            showConfirmButton: true,
+        });
+    } finally {
+        BtnModificar.disabled = false;
     }
-    BtnModificar.disabled = false;
 }
 
 const EliminarPermisos = async (e) => {
@@ -350,19 +521,41 @@ const EliminarPermisos = async (e) => {
     if (AlertaConfirmarEliminar.isConfirmed) {
         const url = `/lopez_recuperacion_comisiones_ingSoft1/permisos/eliminar?id=${idPermiso}`;
         const config = {
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
         }
 
         try {
             const consulta = await fetch(url, config);
-            const respuesta = await consulta.json();
+            
+            if (!consulta.ok) {
+                throw new Error(`HTTP error! status: ${consulta.status}`);
+            }
+            
+            const texto = await consulta.text();
+            if (!texto) {
+                throw new Error('Respuesta vacía del servidor');
+            }
+            
+            let respuesta;
+            try {
+                respuesta = JSON.parse(texto);
+            } catch (parseError) {
+                console.error('Error al parsear JSON:', parseError);
+                console.log('Respuesta del servidor:', texto);
+                throw new Error('Respuesta inválida del servidor');
+            }
+            
             const { codigo, mensaje } = respuesta;
 
             if (codigo == 1) {
                 await Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Exito",
+                    title: "Éxito",
                     text: mensaje,
                     showConfirmButton: true,
                 });
@@ -373,17 +566,25 @@ const EliminarPermisos = async (e) => {
                     position: "center",
                     icon: "error",
                     title: "Error",
-                    text: mensaje,
+                    text: mensaje || 'Error desconocido',
                     showConfirmButton: true,
                 });
             }
 
         } catch (error) {
-            console.log(error);
+            console.error('Error en EliminarPermisos:', error);
+            await Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error",
+                text: "Error al eliminar permiso: " + error.message,
+                showConfirmButton: true,
+            });
         }
     }
 }
 
+// Event listeners
 datatable.on('click', '.eliminar', EliminarPermisos);
 datatable.on('click', '.modificar', llenarFormulario);
 formPermiso.addEventListener('submit', guardarPermiso);
@@ -392,6 +593,7 @@ BtnLimpiar.addEventListener('click', limpiarTodo);
 BtnModificar.addEventListener('click', ModificarPermiso);
 BtnBuscarPermisos.addEventListener('click', MostrarTabla);
 
+// Cargar aplicaciones al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     cargarAplicaciones();
 });

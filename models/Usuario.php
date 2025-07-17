@@ -19,6 +19,7 @@ class Usuario extends ActiveRecord {
         'usuario_contra',
         'usuario_token',
         'usuario_fotografia',
+        'usuario_rol',
         'usuario_situacion'
     ];
 
@@ -38,6 +39,7 @@ class Usuario extends ActiveRecord {
     public $usuario_fecha_creacion;
     public $usuario_fecha_contra;
     public $usuario_fotografia;
+    public $usuario_rol;
     public $usuario_situacion;
     
     public function __construct($args = [])
@@ -56,6 +58,7 @@ class Usuario extends ActiveRecord {
         $this->usuario_fecha_creacion = $args['usuario_fecha_creacion'] ?? '';
         $this->usuario_fecha_contra = $args['usuario_fecha_contra'] ?? '';
         $this->usuario_fotografia = $args['usuario_fotografia'] ?? '';
+         $this->usuario_rol = $args['usuario_rol'] ?? '';
         $this->usuario_situacion = $args['usuario_situacion'] ?? 1;
     }
 }

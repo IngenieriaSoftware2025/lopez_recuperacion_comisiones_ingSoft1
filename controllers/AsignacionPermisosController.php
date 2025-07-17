@@ -18,9 +18,15 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function guardarAPI()
     {
-        getHeadersApi();
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+        header('Access-Control-Allow-Headers: Content-Type');
     
         try {
+            // DEBUG: Log para ver qué llega
+            error_log("POST recibido: " . print_r($_POST, true));
+            
             $_POST['asignacion_usuario_id'] = filter_var($_POST['asignacion_usuario_id'], FILTER_SANITIZE_NUMBER_INT);
             
             if ($_POST['asignacion_usuario_id'] <= 0) {
@@ -146,6 +152,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function buscarAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $sql = "SELECT 
                         ap.*,
@@ -184,7 +193,10 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function modificarAPI()
     {
-        getHeadersApi();
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE');
+        header('Access-Control-Allow-Headers: Content-Type');
 
         $id = $_POST['asignacion_id'];
         
@@ -310,6 +322,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function EliminarAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $id = filter_var($_GET['id'], FILTER_SANITIZE_NUMBER_INT);
             
@@ -324,7 +339,7 @@ class AsignacionPermisosController extends ActiveRecord
                                 WHERE ap.asignacion_id = $id";
             $asignacion_data = self::fetchFirst($sql_asignacion);
             
-            //$ejecutar = AsignacionPermisos::EliminarAsignacion($id);
+            $ejecutar = AsignacionPermisos::EliminarAsignacion($id);
 
             if ($asignacion_data) {
                 $usuario_nombre = $asignacion_data['usuario_nom1'] . ' ' . $asignacion_data['usuario_ape1'];
@@ -350,6 +365,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function buscarUsuariosAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
                     FROM pmlx_usuario 
@@ -376,6 +394,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function buscarAplicacionesAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $sql = "SELECT app_id, app_nombre_corto FROM pmlx_aplicacion WHERE app_situacion = 1 ORDER BY app_nombre_corto";
             $data = self::fetchArray($sql);
@@ -399,6 +420,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function buscarPermisosAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $app_id = isset($_GET['app_id']) ? $_GET['app_id'] : null;
 
@@ -435,6 +459,9 @@ class AsignacionPermisosController extends ActiveRecord
 
     public static function buscarAdministradoresAPI()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+        
         try {
             $sql = "SELECT usuario_id, usuario_nom1, usuario_ape1 
                     FROM pmlx_usuario 
