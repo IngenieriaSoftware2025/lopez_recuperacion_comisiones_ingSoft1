@@ -291,7 +291,7 @@ class AsignacionPermisosController extends ActiveRecord
                 $usuario_nombre = $usuario_data['usuario_nom1'] . ' ' . $usuario_data['usuario_ape1'];
                 $descripcion = "Asignó permiso {$permiso_data['permiso_tipo']} de {$app_data['app_nombre_corto']} a {$usuario_nombre}";
                 
-                //HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ASIGNAR', $descripcion, 'asignacionpermisos/guardar');
+                HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ASIGNAR', $descripcion, 'asignacionpermisos/guardar');
                 
                 http_response_code(200);
                 echo json_encode([
@@ -487,7 +487,7 @@ class AsignacionPermisosController extends ActiveRecord
             $usuario_nombre = $usuario_data['usuario_nom1'] . ' ' . $usuario_data['usuario_ape1'];
             $descripcion = "Modificó asignación de permiso {$permiso_data['permiso_tipo']} de {$app_data['app_nombre_corto']} para {$usuario_nombre}";
             
-            //HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ACTUALIZAR', $descripcion, 'asignacionpermisos/modificar');
+            HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ACTUALIZAR', $descripcion, 'asignacionpermisos/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -530,7 +530,7 @@ class AsignacionPermisosController extends ActiveRecord
                 $usuario_nombre = $asignacion_data['usuario_nom1'] . ' ' . $asignacion_data['usuario_ape1'];
                 $descripcion = "Eliminó asignación de permiso {$asignacion_data['permiso_tipo']} de {$asignacion_data['app_nombre_corto']} para {$usuario_nombre}";
                 
-                //HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ELIMINAR', $descripcion, 'asignacionpermisos/eliminar');
+                HistorialActController::registrarActividad('ASIGNACION_PERMISOS', 'ELIMINAR', $descripcion, 'asignacionpermisos/eliminar');
             }
 
             http_response_code(200);

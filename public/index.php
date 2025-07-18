@@ -8,6 +8,7 @@ use Controllers\AsignacionPermisosController;
 use Controllers\ComisionController;
 use Controllers\ComisionPersonalController;
 use Controllers\EstadisticasController;
+use Controllers\HistorialActController;
 use Controllers\LoginController;
 use Controllers\MapasController;
 use Controllers\PermisosController;
@@ -106,7 +107,10 @@ $router->get('/estadisticas/buscarUsuariosPorCorreoAPI', [EstadisticasController
 $router->get('/estadisticas/buscarComisionesPorEstadoAPI', [EstadisticasController::class, 'buscarComisionesPorEstadoAPI']);
 $router->get('/estadisticas/buscarResumenGeneralAPI', [EstadisticasController::class, 'buscarResumenGeneralAPI']);
 
-
+// HISTORIAL DE ACTIVIDADES
+$router->get('/historial', [HistorialActController::class, 'renderizarPagina']);
+$router->get('/historial/buscarAPI', [HistorialActController::class, 'buscarAPI']);
+$router->get('/historial/buscarUsuariosAPI', [HistorialActController::class, 'buscarUsuariosAPI']);
 
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador

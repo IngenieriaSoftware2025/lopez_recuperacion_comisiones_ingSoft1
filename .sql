@@ -116,3 +116,10 @@ FOREIGN KEY (historial_usuario_id) REFERENCES pmlx_usuario(usuario_id)
 );
 
 
+select * from pmlx_usuario
+
+
+
+INSERT INTO informix.pmlx_usuario(usuario_id, usuario_nom1, usuario_nom2, usuario_ape1, usuario_ape2, usuario_tel, usuario_direc, usuario_dpi, usuario_correo, usuario_contra, usuario_token, usuario_fecha_creacion, usuario_fecha_contra, usuario_fotografia, usuario_rol, usuario_situacion) 
+	VALUES(0, 'Paola', 'Mercedes', 'Lopez', 'Xitumul', 57444158, 'Guatemala', '3164164951503', 'pao140202@gmail.com', '$2y$10$FnCAm4kQPFQFdSi3cNP.N.EEqMUo1uIXjfI5D5.adZxfhK9Sfo2F2', '68796ff6e19da', '2025-7-17', '2025-7-17', '', '', 0)
+GO

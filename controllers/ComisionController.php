@@ -168,7 +168,7 @@ class ComisionController extends ActiveRecord
             $resultado = $comision->crear();
 
             if ($resultado['resultado'] == 1) {
-                //HistorialActController::registrarActividad('COMISIONES', 'CREAR', 'Registró comisión: ' . $_POST['comision_titulo'], 'comisiones/guardar');
+                HistorialActController::registrarActividad('COMISIONES', 'CREAR', 'Registró comisión: ' . $_POST['comision_titulo'], 'comisiones/guardar');
 
                 http_response_code(200);
                 echo json_encode([
@@ -413,7 +413,7 @@ class ComisionController extends ActiveRecord
 
             $resultado = self::SQL($sql);
 
-            //  HistorialActController::registrarActividad('COMISIONES', 'ACTUALIZAR', 'Modificó comisión: ' . $_POST['comision_titulo'], 'comisiones/modificar');
+            HistorialActController::registrarActividad('COMISIONES', 'ACTUALIZAR', 'Modificó comisión: ' . $_POST['comision_titulo'], 'comisiones/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -444,7 +444,7 @@ class ComisionController extends ActiveRecord
             $ejecutar = Comision::EliminarComision($id);
 
             if ($comision_data) {
-                // HistorialActController::registrarActividad('COMISIONES', 'ELIMINAR', 'Eliminó comisión: ' . $comision_data['comision_titulo'], 'comisiones/eliminar');
+                HistorialActController::registrarActividad('COMISIONES', 'ELIMINAR', 'Eliminó comisión: ' . $comision_data['comision_titulo'], 'comisiones/eliminar');
             }
 
             http_response_code(200);

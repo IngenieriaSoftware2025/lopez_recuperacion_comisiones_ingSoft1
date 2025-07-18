@@ -92,7 +92,7 @@ class PermisosController extends ActiveRecord
             if($resultado['resultado'] == 1){
                 $descripcion = "Creó permiso {$_POST['permiso_tipo']} para aplicación {$app_data['app_nombre_corto']}";
                 
-               // HistorialActController::registrarActividad('PERMISOS', 'CREAR', $descripcion, 'permisos/guardar');
+               HistorialActController::registrarActividad('PERMISOS', 'CREAR', $descripcion, 'permisos/guardar');
                 
                 http_response_code(200);
                 echo json_encode([
@@ -231,7 +231,7 @@ class PermisosController extends ActiveRecord
 
             $descripcion = "Modificó permiso {$_POST['permiso_tipo']} para aplicación {$app_data['app_nombre_corto']}";
             
-            //HistorialActController::registrarActividad('PERMISOS', 'ACTUALIZAR', $descripcion, 'permisos/modificar');
+            HistorialActController::registrarActividad('PERMISOS', 'ACTUALIZAR', $descripcion, 'permisos/modificar');
 
             http_response_code(200);
             echo json_encode([
@@ -279,7 +279,7 @@ class PermisosController extends ActiveRecord
             if ($permiso_data) {
                 $descripcion = "Eliminó permiso {$permiso_data['permiso_tipo']} de aplicación {$permiso_data['app_nombre_corto']}";
                 
-              //  HistorialActController::registrarActividad('PERMISOS', 'ELIMINAR', $descripcion, 'permisos/eliminar');
+              HistorialActController::registrarActividad('PERMISOS', 'ELIMINAR', $descripcion, 'permisos/eliminar');
             }
 
             http_response_code(200);
