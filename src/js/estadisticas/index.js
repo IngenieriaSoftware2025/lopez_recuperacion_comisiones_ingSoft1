@@ -1,6 +1,8 @@
 import Chart from 'chart.js/auto';
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Iniciando estadísticas...');
+
     // Verificar elementos canvas
     const grafico1 = document.getElementById("grafico1");
     const grafico2 = document.getElementById("grafico2");
@@ -10,6 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!grafico1 || !grafico2 || !grafico3 || !grafico4 || !grafico5) {
         console.error("No se encontraron todos los elementos canvas");
+        console.log("Elementos encontrados:", {
+            grafico1: !!grafico1,
+            grafico2: !!grafico2,
+            grafico3: !!grafico3,
+            grafico4: !!grafico4,
+            grafico5: !!grafico5
+        });
         return;
     }
 
@@ -30,6 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Crear gráficas
+    console.log('Creando gráficas...');
+    
     window.chart1 = new Chart(grafico1.getContext("2d"), {
         type: 'line',
         data: { labels: [], datasets: [] },
@@ -47,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             ...configBar,
             plugins: {
-                title: { display: true, text: 'Usuarios por Nombre' }
+                title: { display: true, text: 'Usuarios por Inicial del Nombre' }
             }
         }
     });
@@ -69,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         options: {
             ...configPie,
             plugins: {
-                title: { display: true, text: 'Usuarios por Correo' }
+                title: { display: true, text: 'Usuarios por Dominio de Correo' }
             }
         }
     });
@@ -93,29 +104,53 @@ document.addEventListener('DOMContentLoaded', function() {
         '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'
     ];
 
-    // Función para manejar respuestas
+    // Función mejorada para manejar respuestas
     const manejarRespuesta = async (respuesta) => {
-        const texto = await respuesta.text();
-        console.log('Respuesta del servidor:', texto.substring(0, 200));
-        
-        if (texto.includes('<!DOCTYPE') || texto.includes('<html>')) {
-            throw new Error('El servidor devolvió HTML en lugar de JSON');
+        try {
+            const texto = await respuesta.text();
+            console.log('Respuesta cruda:', texto.substring(0, 200) + '...');
+            
+            // Verificar si es HTML
+            if (texto.trim().startsWith('<!DOCTYPE') || texto.trim().startsWith('<html>')) {
+                throw new Error('El servidor devolvió HTML en lugar de JSON');
+            }
+            
+            // Intentar parsear JSON
+            const datos = JSON.parse(texto);
+            console.log('Datos parseados:', datos);
+            return datos;
+            
+        } catch (error) {
+            console.error('Error al procesar respuesta:', error);
+            console.error('Respuesta problemática:', texto);
+            throw error;
         }
-        
-        return JSON.parse(texto);
+    };
+
+    // Función de prueba
+    const TestAPI = async () => {
+        try {
+            console.log('Probando API...');
+            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/testAPI');
+            const datos = await manejarRespuesta(respuesta);
+            console.log('Test API exitoso:', datos);
+            return true;
+        } catch (error) {
+            console.error('Error en test API:', error);
+            return false;
+        }
     };
 
     // 1. Usuarios últimos 30 días
     const BuscarUsuarios30Dias = async () => {
         try {
+            console.log('Buscando usuarios últimos 30 días...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosUltimos30DiasAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Usuarios 30 días:', datos);
-            
             if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
                 const etiquetas = datos.data.map(d => d.fecha_registro);
-                const cantidades = datos.data.map(d => parseInt(d.cantidad));
+                const cantidades = datos.data.map(d => parseInt(d.cantidad) || 0);
                 
                 window.chart1.data.labels = etiquetas;
                 window.chart1.data.datasets = [{
@@ -126,6 +161,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     tension: 0.1
                 }];
                 window.chart1.update();
+                console.log('Gráfica 1 actualizada con', cantidades.length, 'datos');
+            } else {
+                console.log('Sin datos para usuarios 30 días');
             }
         } catch (error) {
             console.error('Error en usuarios 30 días:', error);
@@ -135,14 +173,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Usuarios por nombre
     const BuscarUsuariosPorNombre = async () => {
         try {
+            console.log('Buscando usuarios por nombre...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorNombreAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Usuarios por nombre:', datos);
-            
             if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
                 const etiquetas = datos.data.slice(0, 10).map(d => d.inicial_nombre);
-                const cantidades = datos.data.slice(0, 10).map(d => parseInt(d.cantidad));
+                const cantidades = datos.data.slice(0, 10).map(d => parseInt(d.cantidad) || 0);
                 
                 window.chart2.data.labels = etiquetas;
                 window.chart2.data.datasets = [{
@@ -153,6 +190,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderWidth: 1
                 }];
                 window.chart2.update();
+                console.log('Gráfica 2 actualizada con', cantidades.length, 'datos');
+            } else {
+                console.log('Sin datos para usuarios por nombre');
             }
         } catch (error) {
             console.error('Error en usuarios por nombre:', error);
@@ -162,14 +202,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. Personal por rango
     const BuscarPersonalPorRango = async () => {
         try {
+            console.log('Buscando personal por rango...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarPersonalPorRangoAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Personal por rango:', datos);
-            
             if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
                 const etiquetas = datos.data.map(d => d.rango);
-                const cantidades = datos.data.map(d => parseInt(d.cantidad));
+                const cantidades = datos.data.map(d => parseInt(d.cantidad) || 0);
                 const coloresGrafica = colores.slice(0, etiquetas.length);
                 
                 window.chart3.data.labels = etiquetas;
@@ -180,6 +219,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: '#fff'
                 }];
                 window.chart3.update();
+                console.log('Gráfica 3 actualizada con', cantidades.length, 'datos');
+            } else {
+                console.log('Sin datos para personal por rango');
             }
         } catch (error) {
             console.error('Error en personal por rango:', error);
@@ -189,14 +231,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 4. Usuarios por correo
     const BuscarUsuariosPorCorreo = async () => {
         try {
+            console.log('Buscando usuarios por correo...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarUsuariosPorCorreoAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Usuarios por correo:', datos);
-            
             if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
                 const etiquetas = datos.data.slice(0, 8).map(d => d.dominio_correo);
-                const cantidades = datos.data.slice(0, 8).map(d => parseInt(d.cantidad));
+                const cantidades = datos.data.slice(0, 8).map(d => parseInt(d.cantidad) || 0);
                 const coloresGrafica = colores.slice(0, etiquetas.length);
                 
                 window.chart4.data.labels = etiquetas;
@@ -207,6 +248,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderColor: '#fff'
                 }];
                 window.chart4.update();
+                console.log('Gráfica 4 actualizada con', cantidades.length, 'datos');
+            } else {
+                console.log('Sin datos para usuarios por correo');
             }
         } catch (error) {
             console.error('Error en usuarios por correo:', error);
@@ -216,14 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // 5. Comisiones por estado
     const BuscarComisionesPorEstado = async () => {
         try {
+            console.log('Buscando comisiones por estado...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarComisionesPorEstadoAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Comisiones por estado:', datos);
-            
             if (datos.codigo == 1 && datos.data && datos.data.length > 0) {
                 const etiquetas = datos.data.map(d => d.estado);
-                const cantidades = datos.data.map(d => parseInt(d.cantidad));
+                const cantidades = datos.data.map(d => parseInt(d.cantidad) || 0);
                 
                 window.chart5.data.labels = etiquetas;
                 window.chart5.data.datasets = [{
@@ -234,6 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     borderWidth: 1
                 }];
                 window.chart5.update();
+                console.log('Gráfica 5 actualizada con', cantidades.length, 'datos');
+            } else {
+                console.log('Sin datos para comisiones por estado');
             }
         } catch (error) {
             console.error('Error en comisiones por estado:', error);
@@ -243,58 +289,84 @@ document.addEventListener('DOMContentLoaded', function() {
     // Buscar resumen general
     const BuscarResumenGeneral = async () => {
         try {
+            console.log('Buscando resumen general...');
             const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/buscarResumenGeneralAPI');
             const datos = await manejarRespuesta(respuesta);
             
-            console.log('Resumen general:', datos);
-            
             if (datos.codigo == 1 && datos.data) {
                 const data = datos.data;
-                document.getElementById('totalUsuarios').textContent = data.total_usuarios || 0;
-                document.getElementById('totalComisiones').textContent = data.total_comisiones || 0;
-                document.getElementById('totalPersonal').textContent = data.total_personal || 0;
-                document.getElementById('totalAplicaciones').textContent = data.total_aplicaciones || 0;
-                document.getElementById('totalPermisos').textContent = data.total_permisos || 0;
-                document.getElementById('totalAsignaciones').textContent = data.total_asignaciones_permisos || 0;
+                
+                // Actualizar los elementos si existen
+                const elementos = {
+                    'totalUsuarios': data.total_usuarios || 0,
+                    'totalComisiones': data.total_comisiones || 0,
+                    'totalPersonal': data.total_personal || 0,
+                    'totalAplicaciones': data.total_aplicaciones || 0,
+                    'totalPermisos': data.total_permisos || 0,
+                    'totalAsignaciones': data.total_asignaciones_permisos || 0
+                };
+                
+                Object.entries(elementos).forEach(([id, valor]) => {
+                    const elemento = document.getElementById(id);
+                    if (elemento) {
+                        elemento.textContent = valor;
+                        console.log(`Actualizado ${id}: ${valor}`);
+                    } else {
+                        console.warn(`Elemento ${id} no encontrado`);
+                    }
+                });
+            } else {
+                console.log('Sin datos para resumen general');
             }
         } catch (error) {
             console.error('Error en resumen general:', error);
         }
     };
 
-    // Función de prueba
-    const TestAPI = async () => {
-        try {
-            const respuesta = await fetch('/lopez_recuperacion_comisiones_ingSoft1/estadisticas/testAPI');
-            const datos = await manejarRespuesta(respuesta);
-            console.log('Test API:', datos);
-        } catch (error) {
-            console.error('Error en test API:', error);
+    // Actualizar todas las estadísticas
+    const actualizarTodas = async () => {
+        console.log('=== INICIANDO ACTUALIZACIÓN DE ESTADÍSTICAS ===');
+        
+        // Primero probar la API
+        const apiOk = await TestAPI();
+        if (!apiOk) {
+            console.error('API no responde correctamente');
+            return;
         }
-    };
-
-    // Actualizar todas las gráficas
-    const actualizarTodas = () => {
-        console.log('Actualizando todas las estadísticas...');
-        TestAPI(); // Primero probar la API
-        BuscarUsuarios30Dias();
-        BuscarUsuariosPorNombre();
-        BuscarPersonalPorRango();
-        BuscarUsuariosPorCorreo();
-        BuscarComisionesPorEstado();
-        BuscarResumenGeneral();
+        
+        // Ejecutar todas las funciones
+        await Promise.allSettled([
+            BuscarUsuarios30Dias(),
+            BuscarUsuariosPorNombre(),
+            BuscarPersonalPorRango(),
+            BuscarUsuariosPorCorreo(),
+            BuscarComisionesPorEstado(),
+            BuscarResumenGeneral()
+        ]);
+        
+        console.log('=== ACTUALIZACIÓN COMPLETADA ===');
     };
 
     // Ejecutar al cargar
-    console.log('Iniciando estadísticas...');
-    actualizarTodas();
+    setTimeout(actualizarTodas, 1000); // Esperar 1 segundo para que todo esté listo
 
     // Botón actualizar
     const btnActualizar = document.getElementById('btnActualizarEstadisticas');
     if (btnActualizar) {
-        btnActualizar.addEventListener('click', actualizarTodas);
+        btnActualizar.addEventListener('click', () => {
+            console.log('Actualización manual solicitada');
+            actualizarTodas();
+        });
+        console.log('Evento del botón actualizar configurado');
+    } else {
+        console.warn('Botón actualizar no encontrado');
     }
 
     // Auto-actualizar cada 5 minutos
-    setInterval(actualizarTodas, 300000);
+    setInterval(() => {
+        console.log('Auto-actualización programada');
+        actualizarTodas();
+    }, 300000);
+    
+    console.log('Sistema de estadísticas inicializado correctamente');
 });

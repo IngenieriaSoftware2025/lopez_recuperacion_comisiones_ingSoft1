@@ -8,6 +8,7 @@ use Controllers\AsignacionPermisosController;
 use Controllers\ComisionController;
 use Controllers\ComisionPersonalController;
 use Controllers\EstadisticasController;
+use Controllers\LoginController;
 use Controllers\MapasController;
 use Controllers\PermisosController;
 use Controllers\UsuarioController;
@@ -16,6 +17,26 @@ $router = new Router();
 $router->setBaseURL('/' . $_ENV['APP_NAME']);
 
 $router->get('/', [AppController::class,'index']);
+
+// Rutas de appcontroller
+$router->get('/', [AppController::class,'index']);
+$router->get('/inicio', [AppController::class,'inicio']);
+
+// Rutas de Login
+$router->get('/login', [LoginController::class,'renderizarPagina']);
+$router->post('/login/iniciar', [LoginController::class,'login']);
+$router->get('/logout', [LoginController::class,'logout']);
+
+// RUTAS DE LOGIN
+$router->get('/login', [LoginController::class, 'renderizarPagina']);
+$router->post('/login/iniciar', [LoginController::class, 'login']);
+$router->get('/logout', [LoginController::class, 'logout']);
+
+// O si usas prefijo sesion:
+$router->get('/lopez_recuperacion_comisiones_ingSoft1/login', [LoginController::class, 'renderizarPagina']);
+$router->post('/lopez_recuperacion_comisiones_ingSoft1/login/iniciar', [LoginController::class, 'login']);
+$router->get('/lopez_recuperacion_comisiones_ingSoft1/logout', [LoginController::class, 'logout']);
+
 
 
 //Rutas para usuarios
@@ -84,6 +105,9 @@ $router->get('/estadisticas/buscarPersonalPorRangoAPI', [EstadisticasController:
 $router->get('/estadisticas/buscarUsuariosPorCorreoAPI', [EstadisticasController::class, 'buscarUsuariosPorCorreoAPI']);
 $router->get('/estadisticas/buscarComisionesPorEstadoAPI', [EstadisticasController::class, 'buscarComisionesPorEstadoAPI']);
 $router->get('/estadisticas/buscarResumenGeneralAPI', [EstadisticasController::class, 'buscarResumenGeneralAPI']);
+
+
+
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();

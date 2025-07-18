@@ -110,7 +110,7 @@
             </div>
         </div>
 
-        <!-- Gráficas Principales -->
+        Gráficas Principales
         <div class="row mb-4">
             <!-- Gráfica 1: Usuarios Últimos 30 Días -->
             <div class="col-lg-6 col-md-12 mb-4">
